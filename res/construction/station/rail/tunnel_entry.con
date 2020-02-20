@@ -1,0 +1,278 @@
+local func = require "ste/func"
+local coor = require "ste/coor"
+local line = require "ste/coorline"
+local arc = require "ste/coorarc"
+local pipe = require "ste/pipe"
+local ste = require "ste"
+
+local dump = require "luadump"
+
+local math = math
+local pi = math.pi
+local abs = math.abs
+local unpack = table.unpack
+
+local infi = 1e8
+local slopeList = {2.5, 5, 7.5, 10, 12.5, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 90, 100}
+local rList = {15, 12, 10, 8, 7.5, 6, 5, 4, 3.5, 3, 2.5, 2, 1.75, 1.5, 1.25, 1, 0.9, 0.85, 0.8, 0.75, 0.7, 0.666, 0.633, 0.6, 0.566, 0.533, 0.5, 0.475, 0.45, 0.425, 0.4, 0.375, 0.35, 0.325, 0.3, 0.28, 0.26, 0.24, 0.22, 0.2, 0.18, 0.16, 0.14, 0.12, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05}
+local rList = pipe.new * rList * pipe.map(pipe.neg()) * pipe.rev() / infi + rList
+-- local slopeList = pipe.new * ste.slopeList * pipe.map(pipe.neg()) * pipe.rev() / 0 + ste.slopeList
+local wallList = {
+    "ste/2/concrete_wall",
+    "ste/2/brick_wall",
+    "ste/2/arch_wall",
+}
+
+local fenceList = {
+    "ste/2/concrete_roof_fence_front",
+    "ste/2/brick_roof_fence_front",
+    "ste/2/brick_roof_fence_front"
+}
+
+local fzs0 = function(initRad, finalRad) return function(_) return 0 end end
+
+local function params()
+    return {
+        {
+            key = "radiusS",
+            name = _("MENU_RADIUS_SURFACE"),
+            values = rList * pipe.map(function(r) return r > 15 and "∞" or tostring(math.floor(r * 1000)) end),
+            uiType = "SLIDER",
+            defaultIndex = (#rList - 1) / 2
+        },
+        {
+            key = "radiusU",
+            name = _("MENU_RADIUS_SURFACE"),
+            values = rList * pipe.map(function(r) return r > 15 and "∞" or tostring(math.floor(r * 1000)) end),
+            uiType = "SLIDER",
+            defaultIndex = (#rList - 1) / 2
+        },
+        {
+            key = "slope",
+            name = _("MENU_SLOPE"),
+            values = func.map(slopeList, tostring),
+            uiType = "SLIDER",
+            defaultIndex = #slopeList - 1
+        },
+        {
+            key = "freeNodes",
+            name = _("Free tracks"),
+            values = {_("No"), _("Yes"), _("Not build")},
+            defaultIndex = 0
+        }
+    }
+
+end
+
+local function defaultParams(param)
+    local function limiter(d, u)
+        return function(v) return v and v < u and v or d end
+    end
+    
+    func.forEach(params(), function(i)param[i.key] = limiter(i.defaultIndex or 0, #i.values)(param[i.key]) end)
+end
+
+local createTemplateFn = function(params)
+    local result = {}
+    result[50001] = "station/rail/ste_track_standard.module"
+    result[50002] = "station/rail/ste_track_standard.module"
+    result[48003] = "station/rail/ste_track_standard.module"
+    result[52003] = "station/rail/ste_track_standard.module"
+    result[51004] = "station/rail/ste_wall.module"
+    result[49004] = "station/rail/ste_wall.module"
+    return result
+end
+
+local upgradeFn = function(params)
+    end
+
+local offsetGen = function(meta)
+    local function gen(result, base, lastPos, fst, snd, ...)
+        if (fst and snd) then
+            local pos = snd.pos
+            local offset = base + (fst.width + snd.width) * 0.5
+            
+            return gen(result + {{pos, offset}}, offset, pos, snd, ...)
+        else
+            return result
+        end
+    end
+    return gen(pipe.new * {}, 0, nil, {width = 0}, unpack(meta))
+end
+
+local updateFn = function(params)
+    defaultParams(params)
+    
+    local result = {
+        edgeLists = {},
+        models = pipe.new * {},
+        terrainAlignmentLists = {{type = "EQUAL", faces = {}}},
+        groundFaces = {},
+        slots = pipe.new * {}
+    }
+    
+    local height = 8.5
+    local slope = slopeList[params.slope + 1] * 0.001
+    local nbTracks = 2
+    
+    local radius = {
+        surface = rList[params.radiusS + 1] * 1000,
+        underground = rList[params.radiusU + 1] * 1000
+    }
+    
+    local length = 8.5 / abs(slope)
+    
+    local fz = {
+        surface = function(initRad, finalRad)
+            local ln = line.byPtPt(
+                coor.xy(initRad, -height),
+                coor.xy(finalRad, 0)
+            )
+            return function(rad) return (ln - line.byVecPt(coor.xy(0, 1), coor.xy(rad, 0))).y end
+        end,
+        underground = function(initRad, finalRad)
+            local ln = line.byPtPt(
+                coor.xy(initRad, -height),
+                coor.xy(finalRad, -height * 2)
+            )
+            return function(rad) return (ln - line.byVecPt(coor.xy(0, 1), coor.xy(rad, 0))).y end
+        end
+    }
+
+    local fs = {
+        surface = function(initRad, finalRad) return function(_) return slope end end,
+        underground = function(initRad, finalRad) return function(_) return -slope end end
+    }
+    
+    local arcPackers = {
+        surface = ste.arcPacker(length, radius.surface, fz.surface, fs.surface),
+        underground = ste.arcPacker(-length, radius.underground, fz.underground, fs.underground)
+    }
+    
+    local modules = {}
+    
+    local allPos = {}
+    for slotId, m in pairs(params.modules) do
+        local info = ste.slotInfo(slotId)
+        if not func.contains(allPos, info.pos.x) then table.insert(allPos, info.pos.x) end
+        modules[info.pos.x] = func.with(m,
+            {
+                metadata = func.with(m.metadata, {slotId = slotId, pos = info.pos.x})
+            })
+    end
+    
+    table.sort(allPos)
+    local posMin = func.min(allPos)
+    local posMax = func.max(allPos)
+    
+    local offsets = pipe.new
+        * func.seq(posMin > 50 and 49 or (posMin - 1), posMax + 1)
+        * pipe.map(function(pos)
+            return modules[pos] and modules[pos].metadata or {pos = pos, width = 5}
+        end)
+        * offsetGen
+    
+    local reOffset = func.filter(offsets, function(o) return o[1] == 50 end)[1][2]
+    offsets = offsets * pipe.map(function(o) return {o[1], o[2] - reOffset} end)
+
+    local entityOffsets = offsets * pipe.fold(pipe.new * {}, function(r, o) return func.contains(allPos, o[1]) and r / o[2] or r end)
+    
+
+    result.arcs = {}
+    for i, pos in ipairs(allPos) do
+        local typeId = modules[pos].metadata.slotId % 10
+        if (typeId > 2) then
+            result.arcs[pos] = { surface = ste.arcPacker(length, radius.surface, fzs0, fzs0)(entityOffsets[i]) }
+        else
+            result.arcs[pos] = {
+                surface = arcPackers.surface(entityOffsets[i]),
+                underground = arcPackers.underground(entityOffsets[i])
+            }
+        end
+    end
+    
+    local slots = offsets
+        * pipe.map(function(ph)
+            local pos, offset = unpack(ph)
+            return
+                {
+                    {
+                        id = pos * 1000 + 1,
+                        transf = coor.transX(offset),
+                        type = "ste_track",
+                        spacing = {2.5, 2.5, 5, 5}
+                    },
+                    {
+                        id = pos * 1000 + 2,
+                        transf = coor.transX(offset),
+                        type = "ste_track",
+                        spacing = {2.5, 2.5, 5, 5}
+                    },
+                    {
+                        id = pos * 1000 + 3,
+                        transf = coor.transX(offset),
+                        type = "ste_wall",
+                        spacing = {0.25, 0.25, 0.25, 0.25}
+                    },
+                    {
+                        id = pos * 1000 + 4,
+                        transf = coor.transX(offset),
+                        type = "ste_wall",
+                        spacing = {0.25, 0.25, 0.25, 0.25}
+                    }
+                }
+        end)
+        * pipe.flatten()
+    
+    result.slots = result.slots + slots
+
+    result.terminateConstructionHook = function()
+        dump()(result)
+    end
+    return result
+end
+
+
+function data()
+    local constructionTemplates =
+        {
+            {
+                constructionType = "RAIL_STATION",
+                type = "DYNAMIC",
+                availability = {
+                    yearFrom = 1863,
+                    yearTo = 0
+                },
+                description = {
+                    name = _("MENU_NAME"),
+                    description = _("MENU_DESC"),
+                },
+                data = {
+                    params = {
+                    }
+                },
+            }
+        }
+    
+    return {
+        type = "RAIL_STATION",
+        description = {
+            name = _("Compact Tunnel entry"),
+            description = _("A compact tunnel entry")
+        },
+        -- categories = { "ste" },
+        availability = {
+            yearFrom = 1860
+        },
+        -- buildMode = "MULTI",
+        -- order = 27229,
+        constructionTemplates = constructionTemplates,
+        createTemplateFn = createTemplateFn,
+        -- skipCollision = true,
+        -- austemovable = false,
+        params = params(),
+        upgradeFn = upgradeFn,
+        updateFn = updateFn
+    }
+
+end
