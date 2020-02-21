@@ -380,7 +380,12 @@ function coor.flipZ()
 end
 
 function coor.trans(vec)
-    return coor.transX(vec.x) * coor.transY(vec.y) * coor.transZ(vec.z)
+    return init * {
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        vec.x, vec.y, vec.z, 1
+    }
 end
 
 function coor.transX(dx)

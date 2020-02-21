@@ -39,32 +39,27 @@ return function(wallWidth, desc, order)
             updateFn = function(result, transform, tag, slotId, addModelFn, params)
                 local withTag = general.withTag(tag)
                 local info = ste.slotInfo(slotId)
-                local refArc = result.arcs[info.pos.x].surface
                 
-                local nSeg, baseL, baseR = ste.biLatCoords(5, refArc)(-wallWidth * 0.5, wallWidth * 0.5)
+                local refArc = result.config.arcs[info.pos.x].surface
+                local biLatCoords, nSeg = result.config.coords[info.pos.x].surface.biLatCoords, result.config.coords[info.pos.x].surface.nSeg
+
+                if nSeg <= info.pos.y then return end
+
+                if (not result.config.coords[info.pos.x].surface.base) then
+                    local lc, rc = biLatCoords(-wallWidth * 0.5, wallWidth * 0.5)
+                    result.config.coords[info.pos.x].surface.base = { lc = ste.interlace(lc), rc = ste.interlace(rc) }
+                end
+
+                local lc = result.config.coords[info.pos.x].surface.base.lc[nSeg - info.pos.y]
+                local rc = result.config.coords[info.pos.x].surface.base.rc[nSeg - info.pos.y]
+                
                 local buildWall = ste.buildSurface(fitModels.wall, coor.scaleZ(15))
                 local buildFence = ste.buildSurface(fitModels.fence, coor.transZ(1))
-                
-                local walls = pipe.new
-                * pipe.mapn(
-                    func.seq(1, nSeg),
-                    pipe.rep(nSeg)("ste/concrete_wall"),
-                    ste.interlace(baseL),
-                    ste.interlace(baseR)
-                )(buildWall())
-                * pipe.flatten()
-                
-                local fence = pipe.new
-                * pipe.mapn(
-                    func.seq(1, nSeg),
-                    pipe.rep(nSeg)("ste/concrete_wall"),
-                    ste.interlace(baseL),
-                    ste.interlace(baseR)
-                )(buildFence())
-                * pipe.flatten()
 
-                result.models = result.models + walls + fence
-                
+                local wall = buildWall()(info.pos.y, "ste/concrete_wall", lc, rc) * withTag
+                local fence = buildFence()(info.pos.y, "ste/concrete_wall", lc, rc) * withTag
+
+                result.models = result.models + wall + fence
             end,
             
             getModelsFn = function(params)
