@@ -39,15 +39,20 @@ return function(trackWidth, trackType, catenary, desc, order)
             updateFn = function(result, transform, tag, slotId, addModelFn, params)
                 local withTag = general.withTag(tag)
                 local info = ste.slotInfo(slotId)
+                local config = result.config
+                local coords = config.coords[info.pos.x]
+                local arcs = config.arcs[info.pos.x]
+                local min = config.min[info.pos.x]
                 
-                local isUnderground = info.typeId == 2
                 local isSurface = info.typeId == 1
+                local isUnderground = info.typeId == 2
+                local isParallel = info.typeId == 3
                 
-                local nSeg = isUnderground and result.config.coords[info.pos.x].underground.nSeg or isSurface and result.config.coords[info.pos.x].surface.nSeg
+                local nSeg = isUnderground and coords.underground.nSeg or isSurface and coords.surface.nSeg or isParallel and coords.surface.nSeg
                 if nSeg <= info.pos.y then return end
                 
-                if not (isUnderground and result.config.coords[info.pos.x].underground.edge or isSurface and result.config.coords[info.pos.x].surface.edge) then
-                    local refArc = isUnderground and result.config.arcs[info.pos.x].underground or isSurface and result.config.arcs[info.pos.x].surface
+                if not (isUnderground and coords.underground.edge or isSurface and coords.surface.edge or isParallel and coords.surface.edge) then
+                    local refArc = isUnderground and arcs.underground or isSurface and arcs.surface or isParallel and arcs.top
                     local edgeArc = refArc()
                     local segLength = edgeArc:length() / nSeg
                     
@@ -62,15 +67,17 @@ return function(trackWidth, trackType, catenary, desc, order)
                         * pipe.interlace()
                     
                     if isUnderground then
-                        result.config.coords[info.pos.x].underground.edge = edge
-                        if result.config.coords[info.pos.x].surface.edge then
-                            result.config.coords[info.pos.x].underground.edge[1][1][1] = result.config.coords[info.pos.x].surface.edge[1][1][1]
+                        coords.underground.edge = edge
+                        if coords.surface.edge then
+                            coords.underground.edge[1][1][1] = coords.surface.edge[1][1][1]
+                        end
+                    elseif isSurface then
+                        coords.surface.edge = edge
+                        if coords.underground.edge then
+                            coords.surface.edge[1][1][1] = coords.underground.edge[1][1][1]
                         end
                     else
-                        result.config.coords[info.pos.x].surface.edge = edge
-                        if result.config.coords[info.pos.x].underground.edge then
-                            result.config.coords[info.pos.x].surface.edge[1][1][1] = result.config.coords[info.pos.x].underground.edge[1][1][1]
-                        end
+                        coords.surface.edge = edge
                     end
                 end
                 
@@ -83,8 +90,10 @@ return function(trackWidth, trackType, catenary, desc, order)
                     },
                     edgeType = isUnderground and "TUNNEL" or nil,
                     edgeTypeName = isUnderground and "ste_void.lua" or nil,
-                    edges = (isUnderground and result.config.coords[info.pos.x].underground.edge or isSurface and result.config.coords[info.pos.x].surface.edge)[nSeg - info.pos.y],
-                    snapNodes = {},
+                    edges = (isUnderground and coords.underground.edge or isSurface and coords.surface.edge or isParallel and coords.surface.edge)[nSeg - info.pos.y],
+                    snapNodes = 
+                        ((isUnderground and min.underground or isSurface or isParallel and min.surface) == info.pos.y) and {1}
+                        or {},
                     tag2nodes = {
                         [tag] = {0, 1}
                     },
@@ -94,36 +103,36 @@ return function(trackWidth, trackType, catenary, desc, order)
                 table.insert(result.edgeLists, edges)
                 
                 if isSurface then
-                    local biLatCoords = result.config.coords[info.pos.x].surface.biLatCoords
+                    local biLatCoords = coords.surface.biLatCoords
                     
-                    if (not result.config.coords[info.pos.x].surface.ground) then
+                    if (not coords.surface.ground) then
                         local lc, rc = biLatCoords(-trackWidth * 0.5 - 0.35, trackWidth * 0.5 + 0.35)
-                        result.config.coords[info.pos.x].surface.ground = {lc = ste.interlace(lc), rc = ste.interlace(rc)}
+                        coords.surface.ground = {lc = ste.interlace(lc), rc = ste.interlace(rc)}
                     end
-                    local polyL = result.config.coords[info.pos.x].surface.ground.lc[nSeg - info.pos.y]
-                    local polyR = result.config.coords[info.pos.x].surface.ground.rc[nSeg - info.pos.y]
+                    local polyL = coords.surface.ground.lc[nSeg - info.pos.y]
+                    local polyR = coords.surface.ground.rc[nSeg - info.pos.y]
                     local size = ste.assembleSize(polyL, polyR)
                     table.insert(result.groundFaces, {
                         face = func.map({size.lt, size.lb, size.rb, size.rt}, coor.vec2Tuple),
                         modes = {{type = "FILL", key = "hole.lua"}}
                     })
                     
-                    if (not result.config.coords[info.pos.x].surface.base) then
+                    if (not coords.surface.base) then
                         local lc, rc = biLatCoords(-trackWidth * 0.5, trackWidth * 0.5)
-                        result.config.coords[info.pos.x].surface.base = {lc = ste.interlace(lc), rc = ste.interlace(rc)}
+                        coords.surface.base = {lc = ste.interlace(lc), rc = ste.interlace(rc)}
                     end
                     
-                    local baseL = result.config.coords[info.pos.x].surface.base.lc[nSeg - info.pos.y]
-                    local baseR = result.config.coords[info.pos.x].surface.base.rc[nSeg - info.pos.y]
+                    local baseL = coords.surface.base.lc[nSeg - info.pos.y]
+                    local baseR = coords.surface.base.rc[nSeg - info.pos.y]
                     local buildSurface = ste.buildSurface(fitModels.surface, coor.I())
                     
                     local surface = buildSurface()(info.pos.y, "ste/surface", baseL, baseR) * withTag
                     result.models = result.models + surface
                     
-                    if info.pos.y == result.config.min[info.pos.x].surface then
+                    if info.pos.y == min.surface then
                         local buildFence = ste.buildSurface(fitModels.fence, coor.scaleZ(2) * coor.transZ(1))
                         
-                        local biLatCoords = result.config.coords[info.pos.x].wall.biLatCoords
+                        local biLatCoords = coords.top.biLatCoords
                         local lc, rc = biLatCoords(-trackWidth * 0.5, trackWidth * 0.5)
 
                         local fences = buildFence()(
@@ -135,18 +144,22 @@ return function(trackWidth, trackType, catenary, desc, order)
                         result.models = result.models + fences
                     end
                     
-                    if (not result.config.coords[info.pos.x].surface.top) then
-                        local biLatCoords = result.config.coords[info.pos.x].wall.biLatCoords
+                    if (not coords.surface.top) then
+                        local biLatCoords = coords.top.biLatCoords
                         local lc, rc = biLatCoords(-trackWidth * 0.5 - 1, trackWidth * 0.5 + 1)
-                        result.config.coords[info.pos.x].surface.top = {lc = lc, rc = rc}
+                        coords.surface.top = {lc = lc, rc = rc}
                     end
-                end
-
-                if isUnderground then
-                    if (not result.config.coords[info.pos.x].underground.top) then
-                        local biLatCoords = result.config.coords[info.pos.x].underground.biLatCoords
+                elseif isParallel then
+                    if (not coords.surface.top) then
+                        local biLatCoords = coords.top.biLatCoords
                         local lc, rc = biLatCoords(-trackWidth * 0.5 - 1, trackWidth * 0.5 + 1)
-                        result.config.coords[info.pos.x].underground.top = {
+                        coords.surface.top = {lc = lc, rc = rc}
+                    end
+                elseif isUnderground then
+                    if (not coords.underground.top) then
+                        local biLatCoords = coords.underground.biLatCoords
+                        local lc, rc = biLatCoords(-trackWidth * 0.5 - 1, trackWidth * 0.5 + 1)
+                        coords.underground.top = {
                             lc = func.map(lc, function(c) return c + coor.xyz(0, 0, 8.5) end), 
                             rc = func.map(rc, function(c) return c + coor.xyz(0, 0, 8.5) end)
                         }
