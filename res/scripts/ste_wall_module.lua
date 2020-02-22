@@ -10,6 +10,9 @@ local fitModels = {
     fence = ste.fitModel(0.5, 5, 1, true, true)
 }
 
+local buildWall = ste.buildSurface(fitModels.wall, coor.scaleZ(15))
+local buildFence = ste.buildSurface(fitModels.fence, coor.transZ(1))
+
 local dump = require "luadump"
 return function(wallWidth, desc, order)
     return function()
@@ -40,21 +43,18 @@ return function(wallWidth, desc, order)
                 local withTag = general.withTag(tag)
                 local info = ste.slotInfo(slotId)
                 
-                local refArc = result.config.arcs[info.pos.x].surface
-                local biLatCoords, nSeg = result.config.coords[info.pos.x].surface.biLatCoords, result.config.coords[info.pos.x].surface.nSeg
-
+                local nSeg = result.config.coords[info.pos.x].wall.nSeg
                 if nSeg <= info.pos.y then return end
+                
+                local biLatCoords = result.config.coords[info.pos.x].wall.biLatCoords
 
-                if (not result.config.coords[info.pos.x].surface.base) then
+                if (not result.config.coords[info.pos.x].wall.base) then
                     local lc, rc = biLatCoords(-wallWidth * 0.5, wallWidth * 0.5)
-                    result.config.coords[info.pos.x].surface.base = { lc = ste.interlace(lc), rc = ste.interlace(rc) }
+                    result.config.coords[info.pos.x].wall.base = { lc = ste.interlace(lc), rc = ste.interlace(rc) }
                 end
 
-                local lc = result.config.coords[info.pos.x].surface.base.lc[nSeg - info.pos.y]
-                local rc = result.config.coords[info.pos.x].surface.base.rc[nSeg - info.pos.y]
-                
-                local buildWall = ste.buildSurface(fitModels.wall, coor.scaleZ(15))
-                local buildFence = ste.buildSurface(fitModels.fence, coor.transZ(1))
+                local lc = result.config.coords[info.pos.x].wall.base.lc[nSeg - info.pos.y]
+                local rc = result.config.coords[info.pos.x].wall.base.rc[nSeg - info.pos.y]
 
                 local wall = buildWall()(info.pos.y, "ste/concrete_wall", lc, rc) * withTag
                 local fence = buildFence()(info.pos.y, "ste/concrete_wall", lc, rc) * withTag

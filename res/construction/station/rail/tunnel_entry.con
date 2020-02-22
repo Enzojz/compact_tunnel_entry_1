@@ -13,10 +13,12 @@ local abs = math.abs
 local unpack = table.unpack
 
 local infi = 1e8
+local lengthList = func.seq(80, 400)
 local slopeList = {2.5, 5, 7.5, 10, 12.5, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 90, 100}
 local rList = {15, 12, 10, 8, 7.5, 6, 5, 4, 3.5, 3, 2.5, 2, 1.75, 1.5, 1.25, 1, 0.9, 0.85, 0.8, 0.75, 0.7, 0.666, 0.633, 0.6, 0.566, 0.533, 0.5, 0.475, 0.45, 0.425, 0.4, 0.375, 0.35, 0.325, 0.3, 0.28, 0.26, 0.24, 0.22, 0.2, 0.18, 0.16, 0.14, 0.12, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05}
 local rList = pipe.new * rList * pipe.map(pipe.neg()) * pipe.rev() / infi + rList
 local trackNumberList = {1, 2, 3, 4, 5, 6, 7, 8, 10}
+local portailHeightList = func.seqMap({0, 30}, function(h) return h * 0.5 end)
 -- local slopeList = pipe.new * ste.slopeList * pipe.map(pipe.neg()) * pipe.rev() / 0 + ste.slopeList
 local wallList = {
     "ste/2/concrete_wall",
@@ -29,8 +31,6 @@ local fenceList = {
     "ste/2/brick_roof_fence_front",
     "ste/2/brick_roof_fence_front"
 }
-
-local fzs0 = function(initRad, finalRad) return function(_) return 0 end end
 
 local function params()
     return {
@@ -49,11 +49,18 @@ local function params()
             defaultIndex = (#rList - 1) / 2
         },
         {
-            key = "slope",
-            name = _("MENU_SLOPE"),
-            values = func.map(slopeList, tostring),
+            key = "length",
+            name = _("MENU_LENGTH"),
+            values = func.map(lengthList, tostring),
             uiType = "SLIDER",
-            defaultIndex = #slopeList - 1
+            defaultIndex = 69
+        },
+        {
+            key = "portailHeight",
+            name = _("MENU_PORTAIL_HEIGHT"),
+            values = func.map(portailHeightList, tostring),
+            uiType = "SLIDER",
+            defaultIndex = 0
         },
         {
             key = "freeNodes",
@@ -89,9 +96,12 @@ end
 
 local config = function(params)
     local height = 8.5
-    local slope = slopeList[params.slope + 1] * 0.001
-    local length = height / abs(slope)
-    
+    local portail = portailHeightList[params.portailHeight + 1]
+
+    local length = lengthList[params.length + 1]
+    local trackSlope = (height - portail) / length
+    local wallSlope = portail / length
+
     local radius = {
         surface = rList[params.radiusS + 1] * 1000,
         underground = rList[params.radiusU + 1] * 1000
@@ -100,28 +110,37 @@ local config = function(params)
     local fz = {
         surface = function(initRad, finalRad)
             local ln = line.byPtPt(
-                coor.xy(initRad, -height),
+                coor.xy(initRad, -height + portail),
                 coor.xy(finalRad, 0)
             )
             return function(rad) return (ln - line.byVecPt(coor.xy(0, 1), coor.xy(rad, 0))).y end
         end,
         underground = function(initRad, finalRad)
             local ln = line.byPtPt(
-                coor.xy(initRad, -height),
-                coor.xy(finalRad, -height * 2)
+                coor.xy(initRad, -height + portail),
+                coor.xy(finalRad, (-height + portail) * 2)
             )
             return function(rad) return (ln - line.byVecPt(coor.xy(0, 1), coor.xy(rad, 0))).y end
-        end
+        end,
+        wall = function(initRad, finalRad)
+            local ln = line.byPtPt(
+                coor.xy(initRad, portail),
+                coor.xy(finalRad, 0)
+            )
+            return function(rad) return (ln - line.byVecPt(coor.xy(0, 1), coor.xy(rad, 0))).y end
+        end,
     }
     
     local fs = {
-        surface = function(initRad, finalRad) return function(_) return slope end end,
-        underground = function(initRad, finalRad) return function(_) return -slope end end
+        surface = function(initRad, finalRad) return function(_) return trackSlope end end,
+        underground = function(initRad, finalRad) return function(_) return -trackSlope end end,
+        wall = function(initRad, finalRad) return function(_) return -wallSlope end end,
     }
     
     local arcPackers = {
         surface = ste.arcPacker(length, radius.surface, fz.surface, fs.surface),
-        underground = ste.arcPacker(-length, radius.underground, fz.underground, fs.underground)
+        underground = ste.arcPacker(-length, radius.underground, fz.underground, fs.underground),
+        wall = ste.arcPacker(length, radius.surface, fz.wall, fs.wall),
     }
     
     local min = {}
@@ -132,9 +151,19 @@ local config = function(params)
         local info = ste.slotInfo(slotId)
         if not func.contains(allPos, info.pos.x) then
             table.insert(allPos, info.pos.x)
-            min[info.pos.x] = info.pos.y
-        elseif min[info.pos.x] > info.pos.y then
-            min[info.pos.x] = info.pos.y
+            min[info.pos.x] = {
+                underground = 100,
+                surface = 100
+            }
+        end
+        if info.typeId == 2 then
+            if not min[info.pos.x].underground or min[info.pos.x].underground > info.pos.y then
+                min[info.pos.x].underground = info.pos.y
+            end
+        else
+            if not min[info.pos.x].surface or min[info.pos.x].surface > info.pos.y then
+                min[info.pos.x].surface = info.pos.y
+            end
         end
         modules[info.pos.x] = func.with(m,
             {
@@ -163,21 +192,29 @@ local config = function(params)
     for i, pos in ipairs(allPos) do
         local typeId = modules[pos].metadata.slotId % 10
         if (typeId > 2) then
-            arcs[pos] = {surface = ste.arcPacker(length, radius.surface, fzs0, fzs0)(entityOffsets[i])}
+            arcs[pos] = {wall = arcPackers.wall(entityOffsets[i])}
             coords[pos] = {offset = entityOffsets[i]}
         else
             arcs[pos] = {
                 surface = arcPackers.surface(entityOffsets[i]),
-                underground = arcPackers.underground(entityOffsets[i])
+                underground = arcPackers.underground(entityOffsets[i]),
+                wall = arcPackers.wall(entityOffsets[i])
             }
             coords[pos] = {offset = entityOffsets[i]}
         end
     end
     
     for pos, refArc in pairs(arcs) do
-        local biLatCoords, nSeg = ste.biLatCoords(5, refArc.surface)
-        coords[pos].surface = {biLatCoords = biLatCoords, nSeg = nSeg, coords = ste.interlace(biLatCoords(0))}
-        
+        if (refArc.surface) then
+            local biLatCoords, nSeg = ste.biLatCoords(5, refArc.surface)
+            coords[pos].surface = {biLatCoords = biLatCoords, nSeg = nSeg, coords = ste.interlace(biLatCoords(0))}
+        end
+
+        if (refArc.wall) then
+            local biLatCoords, nSeg = ste.biLatCoords(5, refArc.wall)
+            coords[pos].wall = {biLatCoords = biLatCoords, nSeg = nSeg, coords = ste.interlace(biLatCoords(0))}
+        end
+
         if (refArc.underground) then
             local biLatCoords, nSeg = ste.biLatCoords(5, refArc.underground)
             coords[pos].underground = {biLatCoords = biLatCoords, nSeg = nSeg, coords = ste.interlace(biLatCoords(0))}
@@ -238,67 +275,56 @@ local updateFn = function(params)
             if (config.modules[pos].metadata.isTrack) then
                 for i = 0, 99 do
                     local nSeg = config.coords[pos].surface.nSeg
-                    if (i < nSeg) then
-                        local coord = config.coords[pos].surface.coords[nSeg - i]
-                        table.insert(result.slots, {
-                            id = pos * 1000 + i * 10 + 1,
-                            transf = coor.trans(coord.s:avg(coord.i)),
-                            type = "ste_track",
-                            spacing = {2.5, 2.5, 0, 0}
-                        })
-                    else
-                        table.insert(result.slots, {
-                            id = pos * 1000 + i * 10 + 1,
-                            transf = coor.transX(config.coords[pos].offset),
-                            type = "ste_track",
-                            spacing = {2.5, 2.5, 0, 0}
-                        })
-                    end
+                    local coord = i < nSeg and config.coords[pos].surface.coords[nSeg - i] or config.coords[pos].surface.coords[1]
+                    coord = i < nSeg and coord.s:avg(coord.i) or coord.s
+                    table.insert(result.slots, {
+                        id = pos * 1000 + i * 10 + 1,
+                        transf = coor.trans(coord),
+                        type = "ste_track",
+                        spacing = {2.5, 2.5, 0, 0}
+                    })
+                        
                     local nSeg = config.coords[pos].underground.nSeg
-                    if (i < nSeg) then
-                        local coord = config.coords[pos].underground.coords[nSeg - i]
-                        table.insert(result.slots, {
-                            id = pos * 1000 + i * 10 + 2,
-                            transf = coor.trans(coord.s:avg(coord.i)),
-                            type = "ste_track",
-                            spacing = {2.5, 2.5, 0, 0}
-                        })
-                    else
-                        table.insert(result.slots, {
-                            id = pos * 1000 + i * 10 + 2,
-                            transf = coor.transX(config.coords[pos].offset),
-                            type = "ste_track",
-                            spacing = {2.5, 2.5, 0, 0}
-                        })
-                    end
+                    local coord = i < nSeg and config.coords[pos].underground.coords[nSeg - i] or config.coords[pos].underground.coords[1]
+                    coord = i < nSeg and coord.s:avg(coord.i) or coord.s
+                    table.insert(result.slots, {
+                        id = pos * 1000 + i * 10 + 2,
+                        transf = coor.trans(coord),
+                        type = "ste_track",
+                        spacing = {2.5, 2.5, 0, 0}
+                    })
                 end
             else
                 for i = 0, 99 do
-                    local nSeg = config.coords[pos].surface.nSeg
-                    if (i < nSeg) then
-                        local coord = config.coords[pos].surface.coords[nSeg - i]
-                        table.insert(result.slots, {
-                            id = pos * 1000 + i * 10 + 4,
-                            transf = coor.trans(coord.s:avg(coord.i)),
-                            type = "ste_wall",
-                            spacing = {0.25, 0.25, 0, 0}
-                        })
-                    else
-                        table.insert(result.slots, {
-                            id = pos * 1000 + i * 10 + 4,
-                            transf = coor.transX(config.coords[pos].offset),
-                            type = "ste_wall",
-                            spacing = {0.25, 0.25, 0, 0}
-                        })
-                    end
+                    local nSeg = config.coords[pos].wall.nSeg
+                    local coord = i < nSeg and config.coords[pos].wall.coords[nSeg - i] or config.coords[pos].wall.coords[1]
+                    coord = i < nSeg and coord.s:avg(coord.i) or coord.s
+                    table.insert(result.slots, {
+                        id = pos * 1000 + i * 10 + 4,
+                        transf = coor.trans(coord),
+                        type = "ste_wall",
+                        spacing = {0.25, 0.25, 0, 0}
+                    })
                 end
             end
         else
             end
     end
     result.terminateConstructionHook = function()
-        -- dump()(result)
+        local terrainEql = {}
+        local terrainGrt = {}
+        for _, coords in pairs(result.config.coords) do
+            if (coords.surface and coords.surface.top) then
+                table.insert(terrainEql, func.map(func.concat(coords.surface.top.lc, func.rev(coords.surface.top.rc)), coor.vec2Tuple))
+            end
+            if (coords.underground and coords.underground.top) then
+                table.insert(terrainGrt, func.map(func.concat(func.rev(coords.underground.top.lc), coords.underground.top.rc), coor.vec2Tuple))
+            end
         end
+        
+        table.insert(result.terrainAlignmentLists, {type = "EQUAL", faces = terrainEql})
+        table.insert(result.terrainAlignmentLists, {type = "GREATER", faces = terrainGrt})
+    end
     return result
 end
 

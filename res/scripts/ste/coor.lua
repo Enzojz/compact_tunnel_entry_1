@@ -2,7 +2,7 @@
 Copyright (c) 2016 "Enzojz" from www.transportfever.net
 (https://www.transportfever.net/index.php/User/27218-Enzojz/)
 
-Github reposistey:
+Github repository:
 https://github.com/Enzojz/transportfever
 
 Anyone is free to use the program below, however the auther do not guarantee:
@@ -21,15 +21,13 @@ portions of the Software.
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
 NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-WHETHER IN AN ACTION OF CONTRACT, steT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 --]]
-local laneutil = require "laneutil"
 local func = require "ste/func"
 
 local coor = {}
-coor.make = laneutil.makeLanes
 
 local math = math
 local sin = math.sin
@@ -518,41 +516,6 @@ function coor.shearZoY(s)
         0, 0, 1, 0,
         0, 0, 0, 1
     }
-end
-
-function coor.rotate(edge, mt0, mtr, mt1)
-    return coor.applyEdge(coor.mul(mt0, mtr, mt1), mtr)(edge)
-end
-
-function coor.translateAndBack(center)
-    return coor.trans(coor.o - center),
-        coor.trans(center)
-end
-
-
-function coor.centered(op, rad, center)
-    local mt0, mt1 = coor.translateAndBack(center)
-    local mtr = op(rad)
-    return mt0 * mtr * mt1
-end
-
-function coor.rotateEdgeByZ(degree, center, edge)
-    local mt0, mt1 = coor.translateAndBack(center)
-    local mtr = coor.rotZ(rad(degree))
-    return coor.rotate(edge, mt0, mtr, mt1)
-end
-
-function coor.rotateEdgeByX(rad, center, edge)
-    local mt0, mt1 = coor.translateAndBack(center)
-    local mtr = coor.rotX(rad)
-    return coor.rotate(edge, mt0, mtr, mt1)
-end
-
-function coor.setHeight(height, edge)
-    local mz = coor.transZ(height)
-    local pt, vec = coor.edge2Vec(edge)
-    local newPt = coor.apply(pt, mz)
-    return coor.vec2Edge(newPt, vec)
 end
 
 return coor
