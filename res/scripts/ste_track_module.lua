@@ -56,11 +56,12 @@ return function(trackWidth, trackType, catenary, desc, order)
                     local edgeArc = refArc()
                     local segLength = edgeArc:length() / nSeg
                     
-                    local edge = pipe.new * func.seq(0, nSeg)
+                    local edge = pipe.new * func.seq(0, nSeg * 2)
                         * pipe.map(function(n)
+                            local rad = edgeArc.inf + (edgeArc.sup - edgeArc.inf) * n * 0.5 / nSeg
                             return {
-                                edgeArc:pt(edgeArc.inf + (edgeArc.sup - edgeArc.inf) * n / nSeg),
-                                edgeArc:tangent(edgeArc.inf + (edgeArc.sup - edgeArc.inf) * n / nSeg) * segLength
+                                edgeArc:pt(rad),
+                                edgeArc:tangent(rad) * segLength
                             }
                         end)
                         * pipe.map(pipe.map(coor.vec2Tuple))
@@ -81,21 +82,27 @@ return function(trackWidth, trackType, catenary, desc, order)
                     end
                 end
                 
+                local edge = 
+                    (isUnderground and coords.underground.edge or isSurface and coords.surface.edge or isParallel and coords.surface.edge)
+                    * pipe.range((nSeg - info.pos.y) * 2 - 1, (nSeg - info.pos.y) * 2)
+                    * pipe.flatten()
+                
                 local edges = {
                     type = "TRACK",
-                    alignTerrain = false,
+                    alignTerrain = isParallel,
                     params = {
                         type = trackType,
                         catenary = catenary,
                     },
                     edgeType = isUnderground and "TUNNEL" or nil,
                     edgeTypeName = isUnderground and "ste_void.lua" or nil,
-                    edges = (isUnderground and coords.underground.edge or isSurface and coords.surface.edge or isParallel and coords.surface.edge)[nSeg - info.pos.y],
-                    snapNodes = 
-                        ((isUnderground and min.underground or isSurface or isParallel and min.surface) == info.pos.y) and {1}
-                        or {},
+                    edges = edge,
+                    snapNodes = func.filter({
+                        (info.pos.y < 99 and not params.modules[slotId + 10] or (info.pos.y == nSeg - 1 and info.typeId == 3)) and 0 or false, 
+                        (info.pos.y > 0 and not params.modules[slotId - 10] or info.pos.y == 0) and 3 or false,
+                    }, pipe.noop()),
                     tag2nodes = {
-                        [tag] = {0, 1}
+                        [tag] = {0, 1, 2, 3}
                     },
                     slot = slotId
                 }

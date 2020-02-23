@@ -83,66 +83,44 @@ local function defaultParams(param)
 end
 
 local offsetGen = function(meta)
-    local function gen(result, base, lastPos, fst, snd, ...)
+    local function gen(result, base, fst, snd, ...)
         if (fst and snd) then
             local pos = snd.pos
             local offset = base + (fst.width + snd.width) * 0.5
             
-            return gen(result + {{pos, offset}}, offset, pos, snd, ...)
+            return gen(result + {{pos, offset}}, offset, snd, ...)
         else
             return result
         end
     end
-    return gen(pipe.new * {}, 0, nil, {width = 0}, unpack(meta))
+    return gen(pipe.new * {}, 0, {width = 0}, unpack(meta))
+end
+
+local fzGen = function(initHeight, finalHeight)
+    return function(initRad, finalRad)
+        local ln = line.byPtPt(
+            coor.xy(initRad, initHeight),
+            coor.xy(finalRad, finalHeight)
+        )
+        return function(rad) return (ln - line.byVecPt(coor.xy(0, 1), coor.xy(rad, 0))).y end
+    end
+end
+
+local fsGen = function(slope)
+    return function(initRad, finalRad) return function(_) return slope end end
 end
 
 local config = function(params)
     local height = 8.5
     local portail = portailHeightList[params.portailHeight + 1]
-
+    
     local length = lengthList[params.length + 1]
     local trackSlope = (height - portail) / length
     local wallSlope = portail / length
-
+    
     local radius = {
         surface = rList[params.radiusS + 1] * 1000,
         underground = rList[params.radiusU + 1] * 1000
-    }
-    
-    local fz = {
-        surface = function(initRad, finalRad)
-            local ln = line.byPtPt(
-                coor.xy(initRad, -height + portail),
-                coor.xy(finalRad, 0)
-            )
-            return function(rad) return (ln - line.byVecPt(coor.xy(0, 1), coor.xy(rad, 0))).y end
-        end,
-        underground = function(initRad, finalRad)
-            local ln = line.byPtPt(
-                coor.xy(initRad, -height + portail),
-                coor.xy(finalRad, (-height + portail) * 2)
-            )
-            return function(rad) return (ln - line.byVecPt(coor.xy(0, 1), coor.xy(rad, 0))).y end
-        end,
-        wall = function(initRad, finalRad)
-            local ln = line.byPtPt(
-                coor.xy(initRad, portail),
-                coor.xy(finalRad, 0)
-            )
-            return function(rad) return (ln - line.byVecPt(coor.xy(0, 1), coor.xy(rad, 0))).y end
-        end,
-    }
-    
-    local fs = {
-        surface = function(initRad, finalRad) return function(_) return trackSlope end end,
-        underground = function(initRad, finalRad) return function(_) return -trackSlope end end,
-        wall = function(initRad, finalRad) return function(_) return -wallSlope end end,
-    }
-    
-    local arcPackers = {
-        surface = ste.arcPacker(length, radius.surface, fz.surface, fs.surface),
-        underground = ste.arcPacker(-length, radius.underground, fz.underground, fs.underground),
-        wall = ste.arcPacker(length, radius.surface, fz.wall, fs.wall),
     }
     
     local min = {}
@@ -172,6 +150,24 @@ local config = function(params)
                 metadata = func.with(m.metadata, {slotId = slotId, pos = info.pos.x})
             })
     end
+
+    local fz = {
+        surface = fzGen(-height + portail, 0),
+        underground = fzGen(-height + portail, (-height + portail) * 2),
+        wall = fzGen(portail, 0),
+    }
+    
+    local fs = {
+        surface = fsGen(trackSlope),
+        underground = fsGen(-trackSlope),
+        wall = fsGen(-wallSlope),
+    }
+    
+    local arcPackers = {
+        surface = ste.arcPacker(length, radius.surface, fz.surface, fs.surface),
+        underground = ste.arcPacker(-length, radius.underground, fz.underground, fs.underground),
+        wall = ste.arcPacker(length, radius.surface, fz.wall, fs.wall),
+    }
     
     table.sort(allPos)
     local posMin = func.min(allPos)
@@ -186,42 +182,52 @@ local config = function(params)
     
     local reOffset = func.filter(offsets, function(o) return o[1] == 50 end)[1][2]
     offsets = offsets * pipe.map(function(o) return {o[1], o[2] - reOffset} end)
-    
-    local entityOffsets = offsets * pipe.fold(pipe.new * {}, function(r, o) return func.contains(allPos, o[1]) and r / o[2] or r end)
-    
+        
     local coords = {}
     local arcs = {}
-    for i, pos in ipairs(allPos) do
-        local typeId = modules[pos].metadata.slotId % 10
-        if (typeId > 3) then
-            arcs[pos] = {wall = arcPackers.wall(entityOffsets[i])}
-            coords[pos] = {offset = entityOffsets[i]}
+
+    for i, offset in ipairs(offsets) do
+        local pos, offset = unpack(offset)
+        if func.contains(allPos, pos) then
+            local typeId = modules[pos].metadata.slotId % 10
+            if (typeId > 3) then
+                arcs[pos] = {wall = arcPackers.wall(offset)}
+                coords[pos] = {offset = offset}
+            else
+                arcs[pos] = {
+                    surface = arcPackers.surface(offset),
+                    underground = arcPackers.underground(offset),
+                    top = arcPackers.wall(offset)
+                }
+                coords[pos] = {offset = offset}
+            end
         else
             arcs[pos] = {
-                surface = arcPackers.surface(entityOffsets[i]),
-                underground = arcPackers.underground(entityOffsets[i]),
-                top = arcPackers.wall(entityOffsets[i])
+                surface = arcPackers.surface(offset),
+                underground = arcPackers.underground(offset),
+                wall = arcPackers.wall(offset),
+                top = arcPackers.wall(offset)
             }
-            coords[pos] = {offset = entityOffsets[i]}
+            coords[pos] = {offset = offset}
         end
     end
-    
+
     for pos, refArc in pairs(arcs) do
         if (refArc.surface) then
             local biLatCoords, nSeg = ste.biLatCoords(5, refArc.surface)
             coords[pos].surface = {biLatCoords = biLatCoords, nSeg = nSeg, coords = ste.interlace(biLatCoords(0))}
         end
-
+        
         if (refArc.wall) then
             local biLatCoords, nSeg = ste.biLatCoords(5, refArc.wall)
             coords[pos].wall = {biLatCoords = biLatCoords, nSeg = nSeg, coords = ste.interlace(biLatCoords(0))}
         end
-
+        
         if (refArc.top) then
             local biLatCoords, nSeg = ste.biLatCoords(5, refArc.top)
             coords[pos].top = {biLatCoords = biLatCoords, nSeg = nSeg, coords = ste.interlace(biLatCoords(0))}
         end
-
+        
         if (refArc.underground) then
             local biLatCoords, nSeg = ste.biLatCoords(5, refArc.underground)
             coords[pos].underground = {biLatCoords = biLatCoords, nSeg = nSeg, coords = ste.interlace(biLatCoords(0))}
@@ -234,6 +240,8 @@ local config = function(params)
         allPos = allPos,
         offsets = offsets,
         min = min,
+        posMin = posMin,
+        posMax = posMax,
         modules = modules
     }
 end
@@ -255,8 +263,12 @@ local createTemplateFn = function(params)
     for i = 0, 99 do
         result[(minPos - 1) * 1000 + i * 10 + 4] = "station/rail/ste_wall.module"
         result[(maxPos + 1) * 1000 + i * 10 + 4] = "station/rail/ste_wall.module"
-        result[(minPos - 2) * 1000 + i * 10 + 3] = "station/rail/ste_track_standard.module"
-        result[(maxPos + 2) * 1000 + i * 10 + 3] = "station/rail/ste_track_standard.module"
+        if params.leftTrack == 1 then
+            result[(minPos - 2) * 1000 + i * 10 + 3] = "station/rail/ste_track_standard.module"
+        end
+        if params.rightTrack == 1 then
+            result[(maxPos + 2) * 1000 + i * 10 + 3] = "station/rail/ste_track_standard.module"
+        end
     end
     return result
 end
@@ -274,49 +286,25 @@ local updateFn = function(params)
         terrainAlignmentLists = {{type = "EQUAL", faces = {}}},
         groundFaces = {},
         slots = pipe.new * {},
-        config = config
+        config = config,
     }
     
     for _, pos in ipairs(config.allPos) do
         if (config.modules[pos]) then
-            if (config.modules[pos].metadata.isTrack) then
-                if (ste.slotInfo(config.modules[pos].metadata.slotId).typeId == 3) then
-                    for i = 0, 99 do
-                        local nSeg = config.coords[pos].top.nSeg
-                        local coord = i < nSeg and config.coords[pos].top.coords[nSeg - i] or config.coords[pos].top.coords[1]
-                        coord = i < nSeg and coord.s:avg(coord.i) or coord.s
-                        insert(result.slots, {
-                            id = pos * 1000 + i * 10 + 3,
-                            transf = coor.trans(coord),
-                            type = "ste_track",
-                            spacing = {2.5, 2.5, 0, 0}
-                        })
-                    end
-                else
-                    for i = 0, 99 do
-                        local nSeg = config.coords[pos].surface.nSeg
-                        local coord = i < nSeg and config.coords[pos].surface.coords[nSeg - i] or config.coords[pos].surface.coords[1]
-                        coord = i < nSeg and coord.s:avg(coord.i) or coord.s
-                        insert(result.slots, {
-                            id = pos * 1000 + i * 10 + 1,
-                            transf = coor.trans(coord),
-                            type = "ste_track",
-                            spacing = {2.5, 2.5, 0, 0}
-                        })
-                        
-                            
-                        local nSeg = config.coords[pos].underground.nSeg
-                        local coord = i < nSeg and config.coords[pos].underground.coords[nSeg - i] or config.coords[pos].underground.coords[1]
-                        coord = i < nSeg and coord.s:avg(coord.i) or coord.s
-                        insert(result.slots, {
-                            id = pos * 1000 + i * 10 + 2,
-                            transf = coor.trans(coord),
-                            type = "ste_track",
-                            spacing = {2.5, 2.5, 0, 0}
-                        })
-                    end
+            local typeId = ste.slotInfo(config.modules[pos].metadata.slotId).typeId
+            if (typeId == 3) then
+                for i = 0, 99 do
+                    local nSeg = config.coords[pos].top.nSeg
+                    local coord = i < nSeg and config.coords[pos].top.coords[nSeg - i] or config.coords[pos].top.coords[1]
+                    coord = i < nSeg and coord.s:avg(coord.i) or coord.s
+                    insert(result.slots, {
+                        id = pos * 1000 + i * 10 + 3,
+                        transf = coor.trans(coord),
+                        type = "ste_track",
+                        spacing = i < nSeg and {2.5, 2.5, 2.5, 2.5} or {0, 0, 0, 0}
+                    })
                 end
-            else
+            elseif (typeId == 4) then
                 for i = 0, 99 do
                     local nSeg = config.coords[pos].wall.nSeg
                     local coord = i < nSeg and config.coords[pos].wall.coords[nSeg - i] or config.coords[pos].wall.coords[1]
@@ -325,13 +313,84 @@ local updateFn = function(params)
                         id = pos * 1000 + i * 10 + 4,
                         transf = coor.trans(coord),
                         type = "ste_wall",
-                        spacing = {0.25, 0.25, 0, 0}
+                        spacing = i < nSeg and {0.25, 0.25, 2.5, 2.5} or {0, 0, 0, 0}
+                    })
+                end
+            else
+                for i = 0, 99 do
+                    local nSeg = config.coords[pos].surface.nSeg
+                    local coord = i < nSeg and config.coords[pos].surface.coords[nSeg - i] or config.coords[pos].surface.coords[1]
+                    coord = i < nSeg and coord.s:avg(coord.i) or coord.s
+                    insert(result.slots, {
+                        id = pos * 1000 + i * 10 + 1,
+                        transf = coor.trans(coord),
+                        type = "ste_track",
+                        spacing = i < nSeg and {2.5, 2.5, 2.5, 2.5} or {0, 0, 0, 0}
+                    })
+                    
+                    local nSeg = config.coords[pos].underground.nSeg
+                    local coord = i < nSeg and config.coords[pos].underground.coords[nSeg - i] or config.coords[pos].underground.coords[1]
+                    coord = i < nSeg and coord.s:avg(coord.i) or coord.s
+                    insert(result.slots, {
+                        id = pos * 1000 + i * 10 + 2,
+                        transf = coor.trans(coord),
+                        type = "ste_track",
+                        spacing = i < nSeg and {2.5, 2.5, 2.5, 2.5} or {0, 0, 0, 0}
                     })
                 end
             end
-        else
-            end
+        end
     end
+    
+    if (config.modules[config.posMin]) then
+        local pos = config.posMin - 1
+        local typeId = ste.slotInfo(config.modules[config.posMin].metadata.slotId).typeId
+
+        local addWall = function()
+            local nSeg = config.coords[pos].wall.nSeg
+            local coord = config.coords[pos].wall.coords[1]
+            insert(result.slots, {
+                id = pos * 1000 + (nSeg - 1) * 10 + 4,
+                transf = coor.trans(coord.s:avg(coord.i)),
+                type = "ste_wall",
+                spacing = {0.25, 0.25, 2.5, 2.5}
+            })
+        end
+        
+        local addParaelle = function()
+            local nSeg = config.coords[pos].top.nSeg
+            local coord = config.coords[pos].top.coords[1]
+            insert(result.slots, {
+                id = pos * 1000 + (nSeg - 1) * 10 + 3,
+                transf = coor.trans(coord.s:avg(coord.i)),
+                type = "ste_track",
+                spacing = {2.5, 2.5, 2.5, 2.5}
+            })
+        end
+        
+        local addSurface = function()
+            local nSeg = config.coords[pos].surface.nSeg
+            local coord = config.coords[pos].surface.coords[1]
+            insert(result.slots, {
+                id = pos * 1000 + (nSeg - 1) * 10 + 1,
+                transf = coor.trans(coord.s:avg(coord.i)),
+                type = "ste_track",
+                spacing = {2.5, 2.5, 2.5, 2.5}
+            })
+        end
+
+        if (typeId == 4) then
+            addParaelle()
+            addSurface()
+        elseif (typeId == 3) then
+            addWall()
+            addParaelle()
+        else
+            addWall()
+            addSurface()
+        end
+    end
+
     result.terminateConstructionHook = function()
         local terrainEql = {}
         local terrainGrt = {}
@@ -347,6 +406,9 @@ local updateFn = function(params)
         insert(result.terrainAlignmentLists, {type = "EQUAL", faces = terrainEql})
         insert(result.terrainAlignmentLists, {type = "GREATER", faces = terrainGrt})
     end
+
+    result.callInvalidModules = false
+    
     return result
 end
 
@@ -387,6 +449,20 @@ function data()
                             uiType = "CHECKBOX",
                             values = {"0", "1"},
                             defaultIndex = 1
+                        },
+                        {
+                            key = "leftTrack",
+                            name = _("MENU_LEFT_TRACK"),
+                            uiType = "CHECKBOX",
+                            values = {"0", "1"},
+                            defaultIndex = 0
+                        },
+                        {
+                            key = "rightTrack",
+                            name = _("MENU_TRACK_TRACK"),
+                            uiType = "CHECKBOX",
+                            values = {"0", "1"},
+                            defaultIndex = 0
                         },
                     }
                 },
