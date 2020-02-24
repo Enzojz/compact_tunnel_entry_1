@@ -44,7 +44,7 @@ return function(wallWidth, desc, order)
                 local info = ste.slotInfo(slotId)
                 
                 local nSeg = result.config.coords[info.pos.x].wall.nSeg
-                if nSeg <= info.pos.y then return end
+                if info.pos.y >= nSeg then return end
                 
                 local biLatCoords = result.config.coords[info.pos.x].wall.biLatCoords
 
@@ -53,8 +53,8 @@ return function(wallWidth, desc, order)
                     result.config.coords[info.pos.x].wall.base = { lc = ste.interlace(lc), rc = ste.interlace(rc) }
                 end
 
-                local lc = result.config.coords[info.pos.x].wall.base.lc[nSeg - info.pos.y]
-                local rc = result.config.coords[info.pos.x].wall.base.rc[nSeg - info.pos.y]
+                local lc = result.config.coords[info.pos.x].wall.base.lc[info.pos.y + 1]
+                local rc = result.config.coords[info.pos.x].wall.base.rc[info.pos.y + 1]
 
                 local wall = buildWall()(info.pos.y, "ste/concrete_wall", lc, rc) * withTag
                 local fence = buildFence()(info.pos.y, "ste/concrete_wall", lc, rc) * withTag

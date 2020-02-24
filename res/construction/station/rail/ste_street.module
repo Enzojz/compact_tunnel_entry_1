@@ -1,0 +1,9 @@
+local fn = require "ste_track_module"
+local desc = {
+    name = _("MENU_TR_STD_NAME"),
+    description = _("MENU_TR_STD_DESC"),
+    icon = "ui/construction/station/rail/modular_station/track.tga"
+}
+local trackWidth = 16
+
+data = fn(trackWidth, "country_large_new.lua", false, desc, 1, true)

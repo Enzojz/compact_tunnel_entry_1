@@ -11,7 +11,7 @@ local fitModels = {
     fence = ste.fitModel(5, 0.5, 1, true, true)
 }
 
-return function(trackWidth, trackType, catenary, desc, order)
+return function(trackWidth, trackType, catenary, desc, order, isStreet)
     return function()
         return {
             availability = {
@@ -42,19 +42,18 @@ return function(trackWidth, trackType, catenary, desc, order)
                 local config = result.config
                 local coords = config.coords[info.pos.x]
                 local arcs = config.arcs[info.pos.x]
-                local min = config.min[info.pos.x]
                 
                 local isSurface = info.typeId == 1
                 local isUnderground = info.typeId == 2
                 local isParallel = info.typeId == 3
                 
                 local nSeg = isUnderground and coords.underground.nSeg or isSurface and coords.surface.nSeg or isParallel and coords.surface.nSeg
-                if nSeg <= info.pos.y then return end
+                local segLength = isUnderground and coords.underground.segLength or isSurface and coords.surface.segLength or isParallel and coords.surface.segLength
+                if info.pos.y >= nSeg then return end
                 
                 if not (isUnderground and coords.underground.edge or isSurface and coords.surface.edge or isParallel and coords.surface.edge) then
                     local refArc = isUnderground and arcs.underground or isSurface and arcs.surface or isParallel and arcs.top
                     local edgeArc = refArc()
-                    local segLength = edgeArc:length() / nSeg
                     
                     local edge = pipe.new * func.seq(0, nSeg * 2)
                         * pipe.map(function(n)
@@ -64,7 +63,7 @@ return function(trackWidth, trackType, catenary, desc, order)
                                 edgeArc:tangent(rad) * segLength
                             }
                         end)
-                        * pipe.map(pipe.map(coor.vec2Tuple))
+                        -- * pipe.map(pipe.map(coor.vec2Tuple))
                         * pipe.interlace()
                     
                     if isUnderground then
@@ -84,11 +83,22 @@ return function(trackWidth, trackType, catenary, desc, order)
                 
                 local edge = 
                     (isUnderground and coords.underground.edge or isSurface and coords.surface.edge or isParallel and coords.surface.edge)
-                    * pipe.range((nSeg - info.pos.y) * 2 - 1, (nSeg - info.pos.y) * 2)
+                    * pipe.range(info.pos.y * 2 + 1, info.pos.y * 2 + 2)
                     * pipe.flatten()
+                    -- * pipe.map(pipe.map(coor.vec2Tuple))
+                
+                if (
+                    (info.pos == 1 and not params.modules[slotId + 10])
+                    or (not params.modules[slotId - 10] and not params.modules[slotId + 10])
+                    or (info.pos == 99 and not params.modules[slotId - 10])
+                ) then
+                    edge = edge * pipe.map(function(e) return {e[1], e[2] * 0.5} end) * pipe.map(pipe.map(coor.vec2Tuple)) 
+                else
+                    edge = pipe.new * {edge[1], edge[4]} * pipe.map(pipe.map(coor.vec2Tuple)) 
+                end
                 
                 local edges = {
-                    type = "TRACK",
+                    type = isStreet and "STREET" or "TRACK",
                     alignTerrain = isParallel,
                     params = {
                         type = trackType,
@@ -98,11 +108,11 @@ return function(trackWidth, trackType, catenary, desc, order)
                     edgeTypeName = isUnderground and "ste_void.lua" or nil,
                     edges = edge,
                     snapNodes = func.filter({
-                        (info.pos.y < 99 and not params.modules[slotId + 10] or (info.pos.y == nSeg - 1 and info.typeId == 3)) and 0 or false, 
-                        (info.pos.y > 0 and not params.modules[slotId - 10] or info.pos.y == 0) and 3 or false,
+                        (info.pos.y > 0 and not params.modules[slotId - 10] or (info.pos.y == 0 and info.typeId == 3)) and 0 or false, 
+                        (info.pos.y < 99 and not params.modules[slotId + 10] or info.pos.y == nSeg - 1) and (#edge - 1) or false,
                     }, pipe.noop()),
                     tag2nodes = {
-                        [tag] = {0, 1, 2, 3}
+                        [tag] = func.seqMap({1, #edge}, function(n) return n - 1 end)
                     },
                     slot = slotId
                 }
@@ -116,8 +126,8 @@ return function(trackWidth, trackType, catenary, desc, order)
                         local lc, rc = biLatCoords(-trackWidth * 0.5 - 0.35, trackWidth * 0.5 + 0.35)
                         coords.surface.ground = {lc = ste.interlace(lc), rc = ste.interlace(rc)}
                     end
-                    local polyL = coords.surface.ground.lc[nSeg - info.pos.y]
-                    local polyR = coords.surface.ground.rc[nSeg - info.pos.y]
+                    local polyL = coords.surface.ground.lc[info.pos.y + 1]
+                    local polyR = coords.surface.ground.rc[info.pos.y + 1]
                     local size = ste.assembleSize(polyL, polyR)
                     table.insert(result.groundFaces, {
                         face = func.map({size.lt, size.lb, size.rb, size.rt}, coor.vec2Tuple),
@@ -129,14 +139,14 @@ return function(trackWidth, trackType, catenary, desc, order)
                         coords.surface.base = {lc = ste.interlace(lc), rc = ste.interlace(rc)}
                     end
                     
-                    local baseL = coords.surface.base.lc[nSeg - info.pos.y]
-                    local baseR = coords.surface.base.rc[nSeg - info.pos.y]
+                    local baseL = coords.surface.base.lc[info.pos.y + 1]
+                    local baseR = coords.surface.base.rc[info.pos.y + 1]
                     local buildSurface = ste.buildSurface(fitModels.surface, coor.I())
                     
                     local surface = buildSurface()(info.pos.y, "ste/surface", baseL, baseR) * withTag
                     result.models = result.models + surface
                     
-                    if info.pos.y == min.surface then
+                    if info.pos.y == 0 then
                         local buildFence = ste.buildSurface(fitModels.fence, coor.scaleZ(2) * coor.transZ(1))
                         
                         local biLatCoords = coords.top.biLatCoords

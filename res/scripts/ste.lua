@@ -88,7 +88,7 @@ ste.biLatCoords = function(length, arc)
             local refArc = arc(o)
             return func.map(listRad, function(rad) return refArc:pt(rad) end)
         end))
-    end, nSeg
+    end, nSeg, arcRef:length() / nSeg
 end
 
 ste.assembleSize = function(lc, rc)
