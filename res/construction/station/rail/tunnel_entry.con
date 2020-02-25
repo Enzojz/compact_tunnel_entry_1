@@ -126,20 +126,47 @@ local config = function(params)
     local modules = {}
     
     local allPos = {}
+    local posMark = {}
     for slotId, m in pairs(params.modules) do
         local info = ste.slotInfo(slotId)
         if not func.contains(allPos, info.pos.x) then
             insert(allPos, info.pos.x)
-        end
-        modules[info.pos.x] = func.with(
-            m.metadata,
-            {
-                typeId = ste.slotInfo(slotId).typeId,
-                pos = info.pos.x
+            posMark[info.pos.x] = {
+                surface = false,
+                underground = false
             }
+        end
+        if (info.typeId == 8) then
+            if (not posMark[info.pos.x].surface) then
+                posMark[info.pos.x].surface = info.pos
+            elseif (posMark[info.pos.x].surface.z == 0 and info.pos.z == 1) then
+                posMark[info.pos.x].surface = info.pos
+            elseif (posMark[info.pos.x].surface.z == 1 and info.pos.z == 2) then
+                posMark[info.pos.x].surface = info.pos
+            elseif (posMark[info.pos.x].surface.z == 2 and info.pos.z == 0) then
+                posMark[info.pos.x].surface = info.pos
+            end
+        elseif (info.typeId == 9) then
+            if (not posMark[info.pos.x].underground) then
+                posMark[info.pos.x].underground = info.pos
+            elseif (posMark[info.pos.x].underground.z == 0 and info.pos.z == 1) then
+                posMark[info.pos.x].underground = info.pos
+            elseif (posMark[info.pos.x].underground.z == 1 and info.pos.z == 2) then
+                posMark[info.pos.x].underground = info.pos
+            elseif (posMark[info.pos.x].underground.z == 2 and info.pos.z == 0) then
+                posMark[info.pos.x].underground = info.pos
+            end
+        else
+            modules[info.pos.x] = func.with(
+                m.metadata,
+                {
+                    typeId = ste.slotInfo(slotId).typeId,
+                    pos = info.pos.x
+                }
         )
+        end
     end
-
+    
     local fz = {
         surface = fzGen(-height + portail, 0),
         underground = fzGen(-height + portail, (-height + portail) * 2),
@@ -171,10 +198,10 @@ local config = function(params)
     
     local reOffset = func.filter(offsets, function(o) return o[1] == 50 end)[1][2]
     offsets = offsets * pipe.map(function(o) return {o[1], o[2] - reOffset} end)
-        
+    
     local coords = {}
     local arcs = {}
-
+    
     for i, offset in ipairs(offsets) do
         local pos, offset = unpack(offset)
         if func.contains(allPos, pos) then
@@ -200,7 +227,7 @@ local config = function(params)
             coords[pos] = {offset = offset}
         end
     end
-
+    
     for pos, refArc in pairs(arcs) do
         if (refArc.surface) then
             local biLatCoords, nSeg, segLength = ste.biLatCoords(5, refArc.surface)
@@ -228,11 +255,10 @@ local config = function(params)
         coords = coords,
         allPos = allPos,
         offsets = offsets,
-        min = min,
         posMin = posMin,
         posMax = posMax,
         modules = modules,
-        pos = pos
+        posMark = posMark
     }
 end
 
@@ -244,21 +270,23 @@ local createTemplateFn = function(params)
     
     local result = {}
     
-    for i = 0, 99 do
-        for p = minPos, maxPos do
-            result[p * 1000 + i * 10 + 1] = "station/rail/ste_track_standard.module"
-            result[p * 1000 + i * 10 + 2] = "station/rail/ste_track_standard.module"
-        end
-
-        result[(minPos - 1) * 1000 + i * 10 + 4] = "station/rail/ste_wall.module"
-        result[(maxPos + 1) * 1000 + i * 10 + 4] = "station/rail/ste_wall.module"
-        if params.leftTrack == 1 then
-            result[(minPos - 2) * 1000 + i * 10 + 3] = "station/rail/ste_track_standard.module"
-        end
-        if params.rightTrack == 1 then
-            result[(maxPos + 2) * 1000 + i * 10 + 3] = "station/rail/ste_track_standard.module"
-        end
+    for p = minPos, maxPos do
+        result[ste.slotId(coor.xyz(p, 0, 0), 1)] = "station/rail/ste_track_standard.module"
+        result[ste.slotId(coor.xyz(p, 0, 0), 2)] = "station/rail/ste_track_standard.module"
+        result[ste.slotId(coor.xyz(p, 5, 0), 8)] = "station/rail/ste_pos_marker.module"
     end
+    
+    result[ste.slotId(coor.xyz(minPos - 1, 0, 0), 4)] = "station/rail/ste_wall.module"
+    result[ste.slotId(coor.xyz(maxPos + 1, 0, 0), 4)] = "station/rail/ste_wall.module"
+    
+    if params.leftTrack == 1 then
+        result[ste.slotId(coor.xyz(minPos - 2, 0, 0), 3)] = "station/rail/ste_track_standard.module"
+    end
+    
+    if params.rightTrack == 1 then
+        result[ste.slotId(coor.xyz(maxPos + 2, 0, 0), 3)] = "station/rail/ste_track_standard.module"
+    end
+    
     return result
 end
 
@@ -278,102 +306,90 @@ local updateFn = function(params)
         config = config,
     }
     
-    for _, pos in ipairs(config.allPos) do
-        if (config.modules[pos]) then
-            local typeId = config.modules[pos].typeId
-            if (typeId == 3) then
-                local nSeg = config.coords[pos].top.nSeg
-                for i = 0, nSeg - 1 do
-                    local refLength = config.coords[pos].top.segLength * 0.4
-                    local coord = config.coords[pos].top.coords[i + 1]
-                    coord = coord.s:avg(coord.i)
-                    insert(result.slots, {
-                        id = pos * 1000 + i * 10 + 3,
-                        transf = coor.trans(coord),
-                        type = "ste_track",
-                        spacing = {2.5, 2.5, refLength, refLength}
-                    })
-                end
-            elseif (typeId == 4) then
-                local nSeg = config.coords[pos].wall.nSeg
-                for i = 0, nSeg - 1 do
-                    local refLength = config.coords[pos].wall.segLength * 0.4
-                    local coord = config.coords[pos].wall.coords[i + 1]
-                    coord = coord.s:avg(coord.i)
-                    insert(result.slots, {
-                        id = pos * 1000 + i * 10 + 4,
-                        transf = coor.trans(coord),
-                        type = "ste_wall",
-                        spacing = {0.25, 0.25, refLength, refLength}
-                    })
-                end
-            else
-                local nSeg = config.coords[pos].surface.nSeg
-                for i = 0, nSeg - 1 do
-                    local refLength = config.coords[pos].surface.segLength * 0.4
-                    local coord = config.coords[pos].surface.coords[i + 1]
-                    coord = coord.s:avg(coord.i)
-                    insert(result.slots, {
-                        id = pos * 1000 + i * 10 + 1,
-                        transf = coor.trans(coord),
-                        type = "ste_track",
-                        spacing = {2.5, 2.5, refLength, refLength}
-                    })
-                end
-                    
-                local nSeg = config.coords[pos].underground.nSeg
-                for i = 0, nSeg - 1 do
-                    local refLength = config.coords[pos].underground.segLength * 0.4
-                    local coord = config.coords[pos].underground.coords[i + 1]
-                    coord = coord.s:avg(coord.i)
-                    insert(result.slots, {
-                        id = pos * 1000 + i * 10 + 2,
-                        transf = coor.trans(coord),
-                        type = "ste_track",
-                        spacing = {2.5, 2.5, refLength, refLength}
-                    })
-                end
-            end
+    local addSlot = function(typeId, pos, coords)
+        local spacing = typeId == 4 and coor.xy(0.25, 2.5) or coor.xy(2.5, 2.5)
+        local type = typeId == 4 and "ste_wall" or "ste_track"
+        local coord = coords[1].s:avg(coords[1].i)
+        insert(result.slots, {
+            id = ste.slotId(coor.xyz(pos, 0, 0), typeId),
+            transf = coor.trans(coord),
+            type = type,
+            spacing = {spacing.x, spacing.x, spacing.y, spacing.y}
+        })
+        return coords
+    end
+
+    local addMarker = function(typeId,  pos, coords, nSeg)
+        local posMark = typeId == 2 and config.posMark[pos].underground or config.posMark[pos].surface
+        local spacing = typeId == 4 and coor.xy(0.25, 2.5) or coor.xy(2.5, 2.5)
+        local typeMark = {8, 9, 8, 8}
+        if not posMark then posMark = coor.xyz(pos, nSeg, 0) end
+        local zMark = posMark.z < 2 and posMark.z + 1 or 0
+        for i, coord in ipairs(coords) do
+            local coord = coord.s:avg(coord.i)
+            insert(result.slots, {
+                id = ste.slotId(i == posMark.y and posMark or coor.xyz(pos, i, zMark), typeMark[typeId]),
+                transf = coor.trans(coord),
+                type = "ste_marker",
+                spacing = {spacing.x, spacing.x, spacing.y, spacing.y}
+            })
+        end
+    end
+
+    for slotId, m in pairs(params.modules) do
+        local info = ste.slotInfo(slotId)
+        local pos = info.pos.x
+        local coords = {}
+        if (info.typeId == 1) then
+            local coords = addSlot(info.typeId, pos, config.coords[pos].surface.coords)
+            addMarker(info.typeId, pos, coords, config.coords[pos].surface.nSeg)
+        elseif (info.typeId == 2) then
+            local coords = addSlot(info.typeId, pos, config.coords[pos].underground.coords)
+            addMarker(info.typeId, pos, coords, config.coords[pos].underground.nSeg)
+        elseif (info.typeId == 3) then
+            local coords = addSlot(info.typeId, pos, config.coords[pos].top.coords)
+            addMarker(info.typeId, pos, coords, config.coords[pos].top.nSeg)
+        elseif (info.typeId == 4) then
+            local coords = addSlot(info.typeId, pos, config.coords[pos].wall.coords)
+            addMarker(info.typeId, pos, coords, config.coords[pos].wall.nSeg)
+
         end
     end
     
     if (config.modules[config.posMin]) then
         local pos = config.posMin - 1
         local typeId = config.modules[config.posMin].typeId
-
+        
         local addWall = function()
             local coord = config.coords[pos].wall.coords[1]
-            local refLength = config.coords[pos].wall.segLength * 0.4
             insert(result.slots, {
-                id = pos * 1000 + 4,
+                id = ste.slotId(coor.xyz(pos, 0, 0), 4),
                 transf = coor.trans(coord.s:avg(coord.i)),
                 type = "ste_wall",
-                spacing = {0.25, 0.25, refLength, refLength}
+                spacing = {0.25, 0.25, 2.5, 2.5}
             })
         end
         
         local addParaelle = function()
             local coord = config.coords[pos].top.coords[1]
-            local refLength = config.coords[pos].top.segLength * 0.4
             insert(result.slots, {
-                id = pos * 1000 + 3,
+                id = ste.slotId(coor.xyz(pos, 0, 0), 3),
                 transf = coor.trans(coord.s:avg(coord.i)),
                 type = "ste_track",
-                spacing = {2.5, 2.5, refLength, refLength}
+                spacing = {2.5, 2.5, 2.5, 2.5}
             })
         end
         
         local addSurface = function()
             local coord = config.coords[pos].surface.coords[1]
-            local refLength = config.coords[pos].surface.segLength * 0.4
             insert(result.slots, {
-                id = pos * 1000 + 1,
+                id = ste.slotId(coor.xyz(pos, 0, 0), 1),
                 transf = coor.trans(coord.s:avg(coord.i)),
                 type = "ste_track",
-                spacing = {2.5, 2.5, refLength, refLength}
+                spacing = {2.5, 2.5, 2.5, 2.5}
             })
         end
-
+        
         if (typeId == 4) then
             addParaelle()
             addSurface()
@@ -385,7 +401,20 @@ local updateFn = function(params)
             addSurface()
         end
     end
-
+    
+    result.slotConfig = {
+        ste_track = {
+            maxModules = -1,
+            message = "",
+            skipCollisionCheck = true,
+        },
+        ste_wall = {
+            maxModules = -1,
+            message = "",
+            skipCollisionCheck = true,
+        }
+    }
+    
     result.terminateConstructionHook = function()
         local terrainEql = {}
         local terrainGrt = {}
@@ -401,7 +430,7 @@ local updateFn = function(params)
         insert(result.terrainAlignmentLists, {type = "EQUAL", faces = terrainEql})
         insert(result.terrainAlignmentLists, {type = "GREATER", faces = terrainGrt})
     end
-
+    
     result.callInvalidModules = false
     
     return result

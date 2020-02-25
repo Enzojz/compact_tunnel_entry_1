@@ -43,9 +43,14 @@ return function(wallWidth, desc, order)
                 local withTag = general.withTag(tag)
                 local info = ste.slotInfo(slotId)
                 
+                if info.pos.y > 0 then return end
                 local nSeg = result.config.coords[info.pos.x].wall.nSeg
-                if info.pos.y >= nSeg then return end
+                -- if info.pos.y >= nSeg then return end
                 
+                local posMark = result.config.posMark[info.pos.x].surface
+                posMark = posMark and posMark.y or nSeg
+                if posMark > nSeg then posMark = nSeg end
+
                 local biLatCoords = result.config.coords[info.pos.x].wall.biLatCoords
 
                 if (not result.config.coords[info.pos.x].wall.base) then
@@ -53,13 +58,15 @@ return function(wallWidth, desc, order)
                     result.config.coords[info.pos.x].wall.base = { lc = ste.interlace(lc), rc = ste.interlace(rc) }
                 end
 
-                local lc = result.config.coords[info.pos.x].wall.base.lc[info.pos.y + 1]
-                local rc = result.config.coords[info.pos.x].wall.base.rc[info.pos.y + 1]
+                for i = 1, posMark do
+                    local lc = result.config.coords[info.pos.x].wall.base.lc[i]
+                    local rc = result.config.coords[info.pos.x].wall.base.rc[i]
 
-                local wall = buildWall()(info.pos.y, "ste/concrete_wall", lc, rc) * withTag
-                local fence = buildFence()(info.pos.y, "ste/concrete_wall", lc, rc) * withTag
+                    local wall = buildWall()(nil, "ste/concrete_wall", lc, rc) * withTag
+                    local fence = buildFence()(nil, "ste/concrete_wall", lc, rc) * withTag
 
-                result.models = result.models + wall + fence
+                    result.models = result.models + wall + fence
+                end
             end,
             
             getModelsFn = function(params)

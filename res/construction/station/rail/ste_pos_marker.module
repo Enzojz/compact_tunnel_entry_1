@@ -1,0 +1,32 @@
+data = function()
+    return {
+        availability = {
+            yearFrom = 0,
+            yearTo = 0,
+        },
+        buildMode = "SINGLE",
+        cost = {
+            price = 0,
+        },
+        description = {
+            name = _("NAME_MARKER"),
+            description = _("DESC_MARKER"),
+        },
+        category = {
+            categories = {"track"},
+        },
+        type = "ste_marker",
+        order = {
+            value = 1,
+        },
+        metadata = {
+            isTrack = false,
+            type = "ste_marker"
+        },
+        
+        updateFn = function(result, transform, tag, slotId, addModelFn, params) end,
+        
+        getModelsFn = function(params) return {} end
+    }
+
+end

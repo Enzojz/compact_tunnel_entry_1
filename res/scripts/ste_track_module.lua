@@ -43,14 +43,22 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                 local coords = config.coords[info.pos.x]
                 local arcs = config.arcs[info.pos.x]
                 
+                if info.pos.y > 0 then return end
+
                 local isSurface = info.typeId == 1
                 local isUnderground = info.typeId == 2
                 local isParallel = info.typeId == 3
                 
                 local nSeg = isUnderground and coords.underground.nSeg or isSurface and coords.surface.nSeg or isParallel and coords.surface.nSeg
                 local segLength = isUnderground and coords.underground.segLength or isSurface and coords.surface.segLength or isParallel and coords.surface.segLength
-                if info.pos.y >= nSeg then return end
+                -- if info.pos.y >= nSeg then return end
                 
+                
+                local posMark = config.posMark[info.pos.x] and (isUnderground and config.posMark[info.pos.x].underground or (isSurface or isParallel) and config.posMark[info.pos.x].surface)
+                
+                posMark = posMark and posMark.y or nSeg
+                if posMark > nSeg then posMark = nSeg end
+
                 if not (isUnderground and coords.underground.edge or isSurface and coords.surface.edge or isParallel and coords.surface.edge) then
                     local refArc = isUnderground and arcs.underground or isSurface and arcs.surface or isParallel and arcs.top
                     local edgeArc = refArc()
@@ -58,10 +66,9 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                     local edge = pipe.new * func.seq(0, nSeg * 2)
                         * pipe.map(function(n)
                             local rad = edgeArc.inf + (edgeArc.sup - edgeArc.inf) * n * 0.5 / nSeg
-                            return {
-                                edgeArc:pt(rad),
-                                edgeArc:tangent(rad) * segLength
-                            }
+                            local pt = edgeArc:pt(rad)
+                            local nor = edgeArc:tangent(rad)
+                            return function(length) return {pt, nor * length} end
                         end)
                         -- * pipe.map(pipe.map(coor.vec2Tuple))
                         * pipe.interlace()
@@ -69,12 +76,14 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                     if isUnderground then
                         coords.underground.edge = edge
                         if coords.surface.edge then
-                            coords.underground.edge[1][1][1] = coords.surface.edge[1][1][1]
+                            local ref = coords.underground.edge[1][1]
+                            coords.underground.edge[1][1] = function(length) return { coords.surface.edge[1][1](length)[1], ref(length)[2] } end
                         end
                     elseif isSurface then
                         coords.surface.edge = edge
                         if coords.underground.edge then
-                            coords.surface.edge[1][1][1] = coords.underground.edge[1][1][1]
+                            local ref = coords.underground.edge[1][1]
+                            coords.surface.edge[1][1] = function(length) return { coords.underground.edge[1][1](length)[1], ref(length)[2] } end
                         end
                     else
                         coords.surface.edge = edge
@@ -83,19 +92,19 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                 
                 local edge = 
                     (isUnderground and coords.underground.edge or isSurface and coords.surface.edge or isParallel and coords.surface.edge)
-                    * pipe.range(info.pos.y * 2 + 1, info.pos.y * 2 + 2)
-                    * pipe.flatten()
-                    -- * pipe.map(pipe.map(coor.vec2Tuple))
+                    * function(e) return {e[1][1], e[posMark][2], e[posMark][2], e[posMark * 2][2]} end
+                    * pipe.map(function(f) return f(posMark * segLength * 0.5) end)
+                    * pipe.map(pipe.map(coor.vec2Tuple))
                 
-                if (
-                    (info.pos == 1 and not params.modules[slotId + 10])
-                    or (not params.modules[slotId - 10] and not params.modules[slotId + 10])
-                    or (info.pos == 99 and not params.modules[slotId - 10])
-                ) then
-                    edge = edge * pipe.map(function(e) return {e[1], e[2] * 0.5} end) * pipe.map(pipe.map(coor.vec2Tuple)) 
-                else
-                    edge = pipe.new * {edge[1], edge[4]} * pipe.map(pipe.map(coor.vec2Tuple)) 
-                end
+                -- if (
+                --     (info.pos == 1 and not params.modules[slotId + 10])
+                --     or (not params.modules[slotId - 10] and not params.modules[slotId + 10])
+                --     or (info.pos == 99 and not params.modules[slotId - 10])
+                -- ) then
+                --     edge = edge * pipe.map(function(e) return {e[1], e[2] * 0.5} end) * pipe.map(pipe.map(coor.vec2Tuple)) 
+                -- else
+                --     edge = pipe.new * {edge[1], edge[4]} * pipe.map(pipe.map(coor.vec2Tuple)) 
+                -- end
                 
                 local edges = {
                     type = isStreet and "STREET" or "TRACK",
@@ -107,12 +116,9 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                     edgeType = isUnderground and "TUNNEL" or nil,
                     edgeTypeName = isUnderground and "ste_void.lua" or nil,
                     edges = edge,
-                    snapNodes = func.filter({
-                        (info.pos.y > 0 and not params.modules[slotId - 10] or (info.pos.y == 0 and info.typeId == 3)) and 0 or false, 
-                        (info.pos.y < 99 and not params.modules[slotId + 10] or info.pos.y == nSeg - 1) and (#edge - 1) or false,
-                    }, pipe.noop()),
+                    snapNodes = {3},
                     tag2nodes = {
-                        [tag] = func.seqMap({1, #edge}, function(n) return n - 1 end)
+                        [tag] = {0, 1, 2, 3}
                     },
                     slot = slotId
                 }
@@ -126,40 +132,43 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                         local lc, rc = biLatCoords(-trackWidth * 0.5 - 0.35, trackWidth * 0.5 + 0.35)
                         coords.surface.ground = {lc = ste.interlace(lc), rc = ste.interlace(rc)}
                     end
-                    local polyL = coords.surface.ground.lc[info.pos.y + 1]
-                    local polyR = coords.surface.ground.rc[info.pos.y + 1]
-                    local size = ste.assembleSize(polyL, polyR)
-                    table.insert(result.groundFaces, {
-                        face = func.map({size.lt, size.lb, size.rb, size.rt}, coor.vec2Tuple),
-                        modes = {{type = "FILL", key = "hole.lua"}}
-                    })
+
+                    for i = 1, posMark do
+                        local polyL = coords.surface.ground.lc[i]
+                        local polyR = coords.surface.ground.rc[i]
+                        local size = ste.assembleSize(polyL, polyR)
+                        table.insert(result.groundFaces, {
+                            face = func.map({size.lt, size.lb, size.rb, size.rt}, coor.vec2Tuple),
+                            modes = {{type = "FILL", key = "hole.lua"}}
+                        })
+                    end
                     
                     if (not coords.surface.base) then
                         local lc, rc = biLatCoords(-trackWidth * 0.5, trackWidth * 0.5)
                         coords.surface.base = {lc = ste.interlace(lc), rc = ste.interlace(rc)}
                     end
                     
-                    local baseL = coords.surface.base.lc[info.pos.y + 1]
-                    local baseR = coords.surface.base.rc[info.pos.y + 1]
-                    local buildSurface = ste.buildSurface(fitModels.surface, coor.I())
-                    
-                    local surface = buildSurface()(info.pos.y, "ste/surface", baseL, baseR) * withTag
-                    result.models = result.models + surface
-                    
-                    if info.pos.y == 0 then
-                        local buildFence = ste.buildSurface(fitModels.fence, coor.scaleZ(2) * coor.transZ(1))
+                    for i = 1, posMark do
+                        local baseL = coords.surface.base.lc[i]
+                        local baseR = coords.surface.base.rc[i]
+                        local buildSurface = ste.buildSurface(fitModels.surface, coor.I())
                         
-                        local biLatCoords = coords.top.biLatCoords
-                        local lc, rc = biLatCoords(-trackWidth * 0.5, trackWidth * 0.5)
-
-                        local fences = buildFence()(
-                            50,
-                            "ste/concrete_fence",
-                            {s = lc[1], i = lc[1] + (lc[2] - lc[1]):normalized() * 0.5},
-                            {s = rc[1], i = rc[1] + (rc[2] - rc[1]):normalized() * 0.5}
-                        )
-                        result.models = result.models + fences
+                        local surface = buildSurface()(nil, "ste/surface", baseL, baseR) * withTag
+                        result.models = result.models + surface
                     end
+
+                    local buildFence = ste.buildSurface(fitModels.fence, coor.scaleZ(2) * coor.transZ(1))
+                    
+                    local biLatCoords = coords.top.biLatCoords
+                    local lc, rc = biLatCoords(-trackWidth * 0.5, trackWidth * 0.5)
+
+                    local fences = buildFence()(
+                        nil,
+                        "ste/concrete_fence",
+                        {s = lc[1], i = lc[1] + (lc[2] - lc[1]):normalized() * 0.5},
+                        {s = rc[1], i = rc[1] + (rc[2] - rc[1]):normalized() * 0.5}
+                    )
+                    result.models = result.models + fences
                     
                     if (not coords.surface.top) then
                         local biLatCoords = coords.top.biLatCoords

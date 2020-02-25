@@ -16,6 +16,11 @@ local unpack = table.unpack
 
 local segmentLength = 20
 
+
+ste.slotId = function(pos, typeId)
+    return ((pos.x + pos.z * 100) * 100 + pos.y) * 10 + typeId
+end
+
 ste.slotInfo = function(slotId)
         -- Pos.x : track pos
         -- Pos.y : n module to the origin
@@ -25,12 +30,13 @@ ste.slotInfo = function(slotId)
         --    3. Wall
         --    4. Flat track
         local typeId = slotId % 10
-        local d24 = (slotId - typeId) / 10
-        local pos = d24
-        local posY = pos % 100
-        local posX = (pos - posY) / 100
+        local posZXY = (slotId - typeId) / 10
+        local posY = posZXY % 100
+        local posZX = (posZXY - posY) / 100
+        local posX = posZX % 100
+        local posZ = (posZX - posX) / 100
         return {
-            pos = coor.xy(posX, posY),
+            pos = coor.xyz(posX, posY, posZ),
             typeId = typeId
         }
 end

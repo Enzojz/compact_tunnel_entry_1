@@ -4,6 +4,6 @@ local desc = {
     description = _("MENU_TR_STD_DESC"),
     icon = "ui/construction/station/rail/modular_station/track.tga"
 }
-local trackWidth = 16
+local trackWidth = 12
 
-data = fn(trackWidth, "country_large_new.lua", false, desc, 1, true)
+data = fn(trackWidth, "standard/town_small_new.lua", false, desc, 1, true)
