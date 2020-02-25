@@ -43,8 +43,8 @@ function data()
             {
                 op = "MULTIPLICATION",
                 mode = "NORMAL",
-                scale = { 1, 0.2 },
-                opacity = -300.0
+                scale = { 0.2, 0.2 },
+                opacity = -1025.0
             },
             polygon_offset = {facste = 0, units = 0},
             two_sided = {twoSided = false}

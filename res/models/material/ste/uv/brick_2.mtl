@@ -1,10 +1,9 @@
 function data()
     return {
         params = {
-            fade_out_range = { fadeOutEndDist = 20000, fadeOutStartDist = 10000 },
             map_albedo = {
                 compressionAllowed = true,
-                fileName = "models/ste/concrete.dds",
+                fileName = "models/ste/brick_2.dds",
                 magFilter = "LINEAR",
                 minFilter = "LINEAR_MIPMAP_LINEAR",
                 mipmapAlphaScale = 0,
@@ -14,7 +13,7 @@ function data()
             },
             map_metal_gloss_ao = {
                 compressionAllowed = true,
-                fileName = "models/ste/concrete_ao.dds",
+                fileName = "models/ste/brick_2_ao.dds",
                 magFilter = "LINEAR",
                 minFilter = "LINEAR_MIPMAP_LINEAR",
                 mipmapAlphaScale = 0,
@@ -24,7 +23,7 @@ function data()
             },
             map_normal = {
                 compressionAllowed = true,
-                fileName = "models/ste/concrete_normals.dds",
+                fileName = "models/ste/brick_2_normals.dds",
                 magFilter = "LINEAR",
                 minFilter = "LINEAR_MIPMAP_LINEAR",
                 mipmapAlphaScale = 0,
@@ -33,22 +32,9 @@ function data()
                 wrapS = "REPEAT",
                 wrapT = "REPEAT"
             },
-            map_op_1 =
-            {
-                fileName = "models/ste/op/uz.dds",
-                magFilter = "LINEAR",
-                minFilter = "LINEAR_MIPMAP_LINEAR",
-            },
-            operation_1 =
-            {
-                op = "MULTIPLICATION",
-                mode = "NORMAL",
-                scale = { 1, 0.2 },
-                opacity = -300.0
-            },
-            polygon_offset = {facste = 0, units = 0},
-            two_sided = {twoSided = false}
+            polygon_offset = { facste = 0, units = 0 },
+            two_sided = { twoSided = false }
         },
-        type = "PHYSICAL_NRML_MAP_OP"
+        type = "PHYSICAL_NRML_MAP"
     }
 end

@@ -22,7 +22,7 @@ function data() return {
           {
             materials = {
               "ste/uv/concrete.mtl",
-              "ste/uz/concrete.mtl"
+              "ste/tg/concrete.mtl"
             },
             mesh = "ste/concrete_fence_br.msh",
             transf = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 }

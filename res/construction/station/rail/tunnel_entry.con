@@ -22,18 +22,7 @@ local rList = {15, 12, 10, 8, 7.5, 6, 5, 4, 3.5, 3, 2.5, 2, 1.75, 1.5, 1.25, 1, 
 local rList = pipe.new * rList * pipe.map(pipe.neg()) * pipe.rev() / infi + rList
 local trackNumberList = {1, 2, 3, 4, 5, 6, 7, 8, 10}
 local portailHeightList = func.seqMap({0, 30}, function(h) return h * 0.5 end)
--- local slopeList = pipe.new * ste.slopeList * pipe.map(pipe.neg()) * pipe.rev() / 0 + ste.slopeList
-local wallList = {
-    "ste/2/concrete_wall",
-    "ste/2/brick_wall",
-    "ste/2/arch_wall",
-}
 
-local fenceList = {
-    "ste/2/concrete_roof_fence_front",
-    "ste/2/brick_roof_fence_front",
-    "ste/2/brick_roof_fence_front"
-}
 
 local function params()
     return {
@@ -286,8 +275,8 @@ local createTemplateFn = function(params)
         result[ste.slotId(coor.xyz(p, 0, 0), 2)] = "station/rail/ste_track_standard.module"
     end
     
-    result[ste.slotId(coor.xyz(minPos - 1, 0, 0), 4)] = "station/rail/ste_wall.module"
-    result[ste.slotId(coor.xyz(maxPos + 1, 0, 0), 4)] = "station/rail/ste_wall.module"
+    result[ste.slotId(coor.xyz(minPos - 1, 0, 0), 4)] = "station/rail/ste_concrete_wall.module"
+    result[ste.slotId(coor.xyz(maxPos + 1, 0, 0), 4)] = "station/rail/ste_concrete_wall.module"
     
     if params.leftTrack == 1 then
         result[ste.slotId(coor.xyz(minPos - 2, 0, 0), 3)] = "station/rail/ste_track_standard.module"
