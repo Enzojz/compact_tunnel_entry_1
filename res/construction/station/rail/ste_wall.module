@@ -5,4 +5,4 @@ local desc = {
     icon = "ui/construction/station/rail/modular_station/track.tga"
 }
 
-data = fn(0.5, desc, 1)
+data = fn("ste/concrete_wall", "ste/concrete_wall", 0.5, desc, 1)

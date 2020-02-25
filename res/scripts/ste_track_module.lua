@@ -51,8 +51,6 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                 
                 local nSeg = isUnderground and coords.underground.nSeg or isSurface and coords.surface.nSeg or isParallel and coords.surface.nSeg
                 local segLength = isUnderground and coords.underground.segLength or isSurface and coords.surface.segLength or isParallel and coords.surface.segLength
-                -- if info.pos.y >= nSeg then return end
-                
                 
                 local posMark = config.posMark[info.pos.x] and (isUnderground and config.posMark[info.pos.x].underground or (isSurface or isParallel) and config.posMark[info.pos.x].surface)
                 
@@ -70,7 +68,6 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                             local nor = edgeArc:tangent(rad)
                             return function(length) return {pt, nor * length} end
                         end)
-                        -- * pipe.map(pipe.map(coor.vec2Tuple))
                         * pipe.interlace()
                     
                     if isUnderground then
@@ -96,16 +93,6 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                     * pipe.map(function(f) return f(posMark * segLength * 0.5) end)
                     * pipe.map(pipe.map(coor.vec2Tuple))
                 
-                -- if (
-                --     (info.pos == 1 and not params.modules[slotId + 10])
-                --     or (not params.modules[slotId - 10] and not params.modules[slotId + 10])
-                --     or (info.pos == 99 and not params.modules[slotId - 10])
-                -- ) then
-                --     edge = edge * pipe.map(function(e) return {e[1], e[2] * 0.5} end) * pipe.map(pipe.map(coor.vec2Tuple)) 
-                -- else
-                --     edge = pipe.new * {edge[1], edge[4]} * pipe.map(pipe.map(coor.vec2Tuple)) 
-                -- end
-                
                 local edges = {
                     type = isStreet and "STREET" or "TRACK",
                     alignTerrain = isParallel,
@@ -116,7 +103,7 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                     edgeType = isUnderground and "TUNNEL" or nil,
                     edgeTypeName = isUnderground and "ste_void.lua" or nil,
                     edges = edge,
-                    snapNodes = {3},
+                    snapNodes = isParallel and {0, 3} or {3},
                     tag2nodes = {
                         [tag] = {0, 1, 2, 3}
                     },
@@ -168,7 +155,7 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                         {s = lc[1], i = lc[1] + (lc[2] - lc[1]):normalized() * 0.5},
                         {s = rc[1], i = rc[1] + (rc[2] - rc[1]):normalized() * 0.5}
                     )
-                    result.models = result.models + fences
+                    result.models = result.models + withTag(fences)
                     
                     if (not coords.surface.top) then
                         local biLatCoords = coords.top.biLatCoords

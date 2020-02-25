@@ -1,0 +1,81 @@
+local func = require "ste/func"
+local coor = require "ste/coor"
+local pipe = require "ste/pipe"
+local general = require "ste/general"
+local ste = require "ste"
+local mType = "ste_beam"
+
+local fitModels = {
+    beam = ste.fitModel(5, 5, 0.5, true, true),
+}
+
+local buildBeam = ste.buildSurface(fitModels.beam, coor.transZ(1))
+
+local dump = require "luadump"
+local width = 5
+data = function()
+    return {
+        availability = {
+            yearFrom = 0,
+            yearTo = 0,
+        },
+        buildMode = "SINGLE",
+        cost = {
+            price = 5000,
+        },
+        description = {
+            name = _("MENU_WALL_NAME"),
+            description = _("MENU_WALL_DESC"),
+            icon = "ui/construction/station/rail/modular_station/track.tga"
+        },
+        category = {
+            categories = {"track"},
+        },
+        type = mType,
+        order = {
+            value = order,
+        },
+        metadata = {
+            isTrack = false,
+            width = width,
+            type = mType
+        },
+        
+        updateFn = function(result, transform, tag, slotId, addModelFn, params)
+            local withTag = general.withTag(tag)
+            local info = ste.slotInfo(slotId)
+            
+            local config = result.config
+            local coords = config.coords
+
+            if info.pos.y > 0 then return end
+            local nSeg = coords[info.pos.x].top.nSeg
+            
+            local posMark = config.posMark[info.pos.x].beam
+            posMark = posMark and posMark.y or nSeg
+            if posMark > nSeg then posMark = nSeg end
+            
+            local biLatCoords = coords[info.pos.x].top.biLatCoords
+            
+            local width = config.modules[info.pos.x].width
+
+            if (not coords[info.pos.x].top.beam) then
+                local lc, rc = biLatCoords(-width * 0.5, width * 0.5)
+                coords[info.pos.x].top.beam = {lc = ste.interlace(lc), rc = ste.interlace(rc)}
+            end
+            
+            for i = 1, posMark do
+                local lc = coords[info.pos.x].top.beam.lc[i]
+                local rc = coords[info.pos.x].top.beam.rc[i]
+                
+                local beam = buildBeam()(nil, "ste/concrete_beam", lc, rc) * withTag
+                
+                result.models = result.models + beam
+            end
+        end,
+        
+        getModelsFn = function(params)
+            return {}
+        end
+    }
+end

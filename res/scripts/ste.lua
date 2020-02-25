@@ -18,7 +18,7 @@ local segmentLength = 20
 
 
 ste.slotId = function(pos, typeId)
-    return ((pos.x + pos.z * 100) * 100 + pos.y) * 10 + typeId
+    return ((pos.y + pos.z * 100) * 100 + pos.x) * 10 + typeId
 end
 
 ste.slotInfo = function(slotId)
@@ -30,11 +30,11 @@ ste.slotInfo = function(slotId)
         --    3. Wall
         --    4. Flat track
         local typeId = slotId % 10
-        local posZXY = (slotId - typeId) / 10
-        local posY = posZXY % 100
-        local posZX = (posZXY - posY) / 100
-        local posX = posZX % 100
-        local posZ = (posZX - posX) / 100
+        local posZYX = (slotId - typeId) / 10
+        local posX = posZYX % 100
+        local posZY = (posZYX - posX) / 100
+        local posY = posZY % 100
+        local posZ = (posZY - posY) / 100
         return {
             pos = coor.xyz(posX, posY, posZ),
             typeId = typeId

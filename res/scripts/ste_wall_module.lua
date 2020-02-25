@@ -14,7 +14,7 @@ local buildWall = ste.buildSurface(fitModels.wall, coor.scaleZ(15))
 local buildFence = ste.buildSurface(fitModels.fence, coor.transZ(1))
 
 local dump = require "luadump"
-return function(wallWidth, desc, order)
+return function(modelWall, modelFence, wallWidth, desc, order)
     return function()
         return {
             availability = {
@@ -62,8 +62,8 @@ return function(wallWidth, desc, order)
                     local lc = result.config.coords[info.pos.x].wall.base.lc[i]
                     local rc = result.config.coords[info.pos.x].wall.base.rc[i]
 
-                    local wall = buildWall()(nil, "ste/concrete_wall", lc, rc) * withTag
-                    local fence = buildFence()(nil, "ste/concrete_wall", lc, rc) * withTag
+                    local wall = buildWall()(nil, modelWall, lc, rc) * withTag
+                    local fence = buildFence()(nil, modelFence, lc, rc) * withTag
 
                     result.models = result.models + wall + fence
                 end
