@@ -55,11 +55,16 @@ local function params()
             defaultIndex = 0
         },
         {
-            key = "freeNodes",
-            name = _("Free tracks"),
-            values = {_("No"), _("Yes"), _("Not build")},
+            key = "wallType",
+            name = _("MENU_WALL_STYLE"),
+            values = {
+                "ui/ste/concrete.tga",
+                "ui/ste/brick.tga",
+                "ui/ste/brick_2.tga"
+            },
+            uiType = "ICON_BUTTON",
             defaultIndex = 0
-        }
+        },
     }
 
 end
@@ -196,7 +201,9 @@ local config = function(params)
         end)
         * offsetGen
     
-    local reOffset = func.filter(offsets, function(o) return o[1] == 50 end)[1][2]
+    local reOffset =
+        posMin > 50 and func.min(offsets, function(l, r) return l[2] < r[2] end)[2]
+        or (offsets * pipe.filter(function(o) return o[1] <= 50 end) * pipe.max(function(l, r) return l[2] < r[2] end))[2]
     offsets = offsets * pipe.map(function(o) return {o[1], o[2] - reOffset} end)
     
     local coords = {}
@@ -275,8 +282,8 @@ local createTemplateFn = function(params)
         result[ste.slotId(coor.xyz(p, 0, 0), 2)] = "station/rail/ste_track_standard.module"
     end
     
-    result[ste.slotId(coor.xyz(minPos - 1, 0, 0), 4)] = "station/rail/ste_concrete_wall.module"
-    result[ste.slotId(coor.xyz(maxPos + 1, 0, 0), 4)] = "station/rail/ste_concrete_wall.module"
+    result[ste.slotId(coor.xyz(minPos - 1, 0, 0), 4)] = "station/rail/ste_wall.module"
+    result[ste.slotId(coor.xyz(maxPos + 1, 0, 0), 4)] = "station/rail/ste_wall.module"
     
     if params.leftTrack == 1 then
         result[ste.slotId(coor.xyz(minPos - 2, 0, 0), 3)] = "station/rail/ste_track_standard.module"
@@ -293,6 +300,17 @@ local upgradeFn = function(params)
     end
 
 local updateFn = function(params)
+    if #func.keys(params.modules) == 0 then
+        return {
+            edgeLists = {},
+            models = {{
+                id = "asset/icon/marker_exclamation.mdl",
+                transf = coor.I(),
+            }},
+            terrainAlignmentLists = {{type = "EQUAL", faces = {}}}
+        }
+    end
+
     defaultParams(params)
     local config = config(params)
     
@@ -348,11 +366,13 @@ local updateFn = function(params)
             })
         end
     end
-    dump()(params.modules)
+    
+    local emptyPos = func.seq(config.posMin, config.posMax)
+
     for slotId, m in pairs(params.modules) do
         local info = ste.slotInfo(slotId)
         local pos = info.pos.x
-        dump()(slotId)
+        emptyPos = func.filter(emptyPos, function(p) return p ~= pos end)
         if (info.typeId == 1) then
             local coords, sId = addSlot(info.typeId, pos, config.coords[pos].surface.coords)
             addMarker(info.typeId, pos, coords, config.coords[pos].surface.nSeg, sId)
@@ -369,7 +389,7 @@ local updateFn = function(params)
             addMarker(info.typeId, pos, coords, config.coords[pos].underground.nSeg, sId)
             
             if not params.modules[ste.slotId(info.pos, 1)] then
-                addSlot(1, pos, config.coords[pos].underground.coords)
+                addSlot(1, pos, config.coords[pos].surface.coords)
             end
         elseif (info.typeId == 3) then
             local coords, sId = addSlot(info.typeId, pos, config.coords[pos].top.coords)
@@ -383,7 +403,37 @@ local updateFn = function(params)
         end
     end
 
-    dump()(result.slots)
+    for _, pos in ipairs(emptyPos) do
+        local posL = func.max(func.filter(
+            config.allPos, function(p) return p < pos end))
+        local posR = func.min(func.filter(
+            config.allPos, function(p) return p > pos end))
+
+        local typeIdL = config.modules[posL].typeId
+        local typeIdR = config.modules[posR].typeId
+
+        if (typeIdL == 4 and typeIdR == 4) then
+            addSlot(3, pos, config.coords[pos].top.coords)
+            addSlot(1, pos, config.coords[pos].surface.coords)
+        elseif (typeIdL == 4 and typeIdR == 3) then
+            addSlot(3, pos, config.coords[pos].top.coords)
+        elseif (typeIdL == 3 and typeIdR == 4) then
+            addSlot(3, pos, config.coords[pos].top.coords)
+        elseif (typeIdL == 4 and typeIdR < 3) then
+            addSlot(1, pos, config.coords[pos].surface.coords)
+        elseif (typeIdL == 3 and typeIdR == 3) then
+            addSlot(3, pos, config.coords[pos].top.coords)
+            addSlot(4, pos, config.coords[pos].wall.coords)
+        elseif (typeIdL == 3 and typeIdR < 3) then
+            addSlot(4, pos, config.coords[pos].wall.coords)
+        elseif (typeIdL < 3 and typeIdR == 4) then
+            addSlot(1, pos, config.coords[pos].surface.coords)
+        elseif (typeIdL < 3 and typeIdR == 3) then
+            addSlot(4, pos, config.coords[pos].wall.coords)
+        elseif (typeIdL < 3 and typeIdR < 3) then
+            addSlot(1, pos, config.coords[pos].surface.coords)
+        end
+    end
     
     if (config.modules[config.posMin]) then
         local pos = config.posMin - 1

@@ -42,7 +42,7 @@ function data()
             {
                 op = "MULTIPLICATION",
                 mode = "NORMAL",
-                scale = { 1, 0.4 },
+                scale = { 1, 0.2 },
                 opacity = -300.0
             },
             polygon_offset = {facste = 0, units = 0},

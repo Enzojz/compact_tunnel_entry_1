@@ -34,7 +34,7 @@ function data()
             },
             map_op_1 =
             {
-                fileName = "models/ste/op/uz.dds",
+                fileName = "models/ste/op/nz.dds",
                 magFilter = "LINEAR",
                 minFilter = "LINEAR_MIPMAP_LINEAR",
             },
@@ -42,8 +42,8 @@ function data()
             {
                 op = "MULTIPLICATION",
                 mode = "NORMAL",
-                scale = { 0.4, 0.4 },
-                opacity = -1025.0
+                scale = { 0.2, 0.2 },
+                opacity = -515.0
             },
             polygon_offset = {facste = 0, units = 0},
             two_sided = {twoSided = false}

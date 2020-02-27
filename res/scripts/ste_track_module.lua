@@ -11,6 +11,12 @@ local fitModels = {
     fence = ste.fitModel(5, 0.5, 1, true, true)
 }
 
+local wallTypes = {
+    "ste/concrete_fence",
+    "ste/brick_fence",
+    "ste/brick_2_fence"
+}
+
 return function(trackWidth, trackType, catenary, desc, order, isStreet)
     return function()
         return {
@@ -135,13 +141,15 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                         coords.surface.base = {lc = ste.interlace(lc), rc = ste.interlace(rc)}
                     end
                     
-                    for i = 1, posMark do
-                        local baseL = coords.surface.base.lc[i]
-                        local baseR = coords.surface.base.rc[i]
-                        local buildSurface = ste.buildSurface(fitModels.surface, coor.I())
-                        
-                        local surface = buildSurface()(nil, "ste/surface", baseL, baseR) * withTag
-                        result.models = result.models + surface
+                    if (not isStreet) then
+                        for i = 1, posMark do
+                            local baseL = coords.surface.base.lc[i]
+                            local baseR = coords.surface.base.rc[i]
+                            local buildSurface = ste.buildSurface(fitModels.surface, coor.I())
+                            
+                            local surface = buildSurface()(nil, "ste/surface", baseL, baseR) * withTag
+                            result.models = result.models + surface
+                        end
                     end
 
                     local buildFence = ste.buildSurface(fitModels.fence, coor.scaleZ(2) * coor.transZ(1))
@@ -151,7 +159,7 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
 
                     local fences = buildFence()(
                         nil,
-                        "ste/concrete_fence",
+                        wallTypes[params.wallType + 1],
                         {s = lc[1], i = lc[1] + (lc[2] - lc[1]):normalized() * 0.5},
                         {s = rc[1], i = rc[1] + (rc[2] - rc[1]):normalized() * 0.5}
                     )

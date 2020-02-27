@@ -13,6 +13,12 @@ local fitModels = {
 local buildWall = ste.buildSurface(fitModels.wall, coor.scaleZ(15))
 local buildFence = ste.buildSurface(fitModels.fence, coor.transZ(1))
 
+local wallTypes = {
+    "ste/concrete_wall",
+    "ste/brick_wall",
+    "ste/brick_2_wall"
+}
+
 local dump = require "luadump"
 return function(modelWall, modelFence, wallWidth, desc, order)
     return function()
@@ -40,6 +46,8 @@ return function(modelWall, modelFence, wallWidth, desc, order)
             },
             
             updateFn = function(result, transform, tag, slotId, addModelFn, params)
+                local modelWall = modelWall or wallTypes[params.wallType + 1]
+                local modelFence = modelFence or wallTypes[params.wallType + 1]
                 local withTag = general.withTag(tag)
                 local info = ste.slotInfo(slotId)
                 
