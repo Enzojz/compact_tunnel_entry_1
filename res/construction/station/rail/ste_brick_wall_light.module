@@ -1,8 +1,0 @@
-local fn = require "ste_wall_module"
-local desc = {
-    name = _("MENU_WALL_NAME"),
-    description = _("MENU_WALL_DESC"),
-    icon = "ui/construction/station/rail/modular_station/track.tga"
-}
-
-data = fn("ste/brick_2_wall", "ste/brick_2_wall", 0.5, desc, 1)

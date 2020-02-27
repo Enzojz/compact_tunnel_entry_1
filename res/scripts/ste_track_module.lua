@@ -30,7 +30,7 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
             },
             description = desc,
             category = {
-                categories = {"track"},
+                categories = {isStreet and _("STREET") or _("TRACK")},
             },
             type = mType,
             order = {

@@ -1,0 +1,10 @@
+local fn = require "ste_track_module"
+local desc = {
+    name = _("Medium highway"),
+    description = _("Medium highway"),
+    icon = "ui/streets/standard/country_medium_one_way_new.tga"
+}
+
+local trackWidth = 16
+
+data = fn(trackWidth, "standard/country_medium_one_way_new.lua", false, desc, 42, true)

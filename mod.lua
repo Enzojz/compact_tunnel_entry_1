@@ -1,3 +1,6 @@
+local dump = require "luadump"
+local wr = require "luadump2"
+
 function data()
     return {
         info = {
@@ -16,5 +19,29 @@ function data()
             },
             tags = {"Street Construction", "Tunnel"},
         }
+    --     runFn = function(settings)
+    --         addModifier("loadStreet", 
+    --             function(fileName, data)
+    --                 local width = data.streetWidth + data.sidewalkWidth * 2
+    --                 local fname = string.match(fileName, "standard/([a-zA-Z_]+).lua")
+    --                 if (fname) then
+    --                 local s = string.format([[
+    -- local fn = require "ste_track_module"
+    -- local desc = {
+    --     name = _("%s"),
+    --     description = _("%s"),
+    --     icon = "ui/streets/standard/%s.tga"
+    -- }
+
+    -- local trackWidth = %d
+
+    -- data = fn(trackWidth, "standard/%s.lua", false, desc, 1, true)]], data.name, data.name, fname, width, fname)
+    --                 local file = io.open("ste/" .. fname .. ".module", "w")
+    --                 file:write(s)
+    --                 file:close()
+    --             end
+    --             return data
+    --         end)
+    --     end
     }
 end

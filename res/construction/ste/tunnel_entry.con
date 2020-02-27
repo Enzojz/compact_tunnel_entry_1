@@ -24,6 +24,13 @@ local trackNumberList = {1, 2, 3, 4, 5, 6, 7, 8, 10}
 local portailHeightList = func.seqMap({0, 30}, function(h) return h * 0.5 end)
 
 
+local trackTypeList = {
+    "ste/tracks/std.module",
+    "ste/tracks/std_catenary.module",
+    "ste/tracks/hs.module",
+    "ste/tracks/hs_catenary.module"
+}
+
 local function params()
     return {
         {
@@ -271,26 +278,27 @@ end
 
 local createTemplateFn = function(params)
     local trackNb = trackNumberList[params.trackNb + 1]
-    
+    local trackType = trackTypeList[(params.catenary) + (params.highspeed) * 2 + 1]
+
     local minPos = 50 - (trackNb % 2 == 1 and (trackNb - 1) / 2 or trackNb / 2)
     local maxPos = minPos + trackNb - 1
     
     local result = {}
     
     for p = minPos, maxPos do
-        result[ste.slotId(coor.xyz(p, 0, 0), 1)] = "station/rail/ste_track_standard.module"
-        result[ste.slotId(coor.xyz(p, 0, 0), 2)] = "station/rail/ste_track_standard.module"
+        result[ste.slotId(coor.xyz(p, 0, 0), 1)] = trackType
+        result[ste.slotId(coor.xyz(p, 0, 0), 2)] = trackType
     end
     
-    result[ste.slotId(coor.xyz(minPos - 1, 0, 0), 4)] = "station/rail/ste_wall.module"
-    result[ste.slotId(coor.xyz(maxPos + 1, 0, 0), 4)] = "station/rail/ste_wall.module"
+    result[ste.slotId(coor.xyz(minPos - 1, 0, 0), 4)] = "ste/ste_wall.module"
+    result[ste.slotId(coor.xyz(maxPos + 1, 0, 0), 4)] = "ste/ste_wall.module"
     
     if params.leftTrack == 1 then
-        result[ste.slotId(coor.xyz(minPos - 2, 0, 0), 3)] = "station/rail/ste_track_standard.module"
+        result[ste.slotId(coor.xyz(minPos - 2, 0, 0), 3)] = trackType
     end
     
     if params.rightTrack == 1 then
-        result[ste.slotId(coor.xyz(maxPos + 2, 0, 0), 3)] = "station/rail/ste_track_standard.module"
+        result[ste.slotId(coor.xyz(maxPos + 2, 0, 0), 3)] = trackType
     end
     
     return result

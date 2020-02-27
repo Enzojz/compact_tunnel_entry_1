@@ -24,16 +24,16 @@ data = function()
             price = 5000,
         },
         description = {
-            name = _("MENU_WALL_NAME"),
-            description = _("MENU_WALL_DESC"),
+            name = _("MENU_CONCRETE_BEAM_NAME"),
+            description = _("MENU_CONCRETE_BEAM_DESC"),
             icon = "ui/construction/station/rail/modular_station/track.tga"
         },
         category = {
-            categories = {"track"},
+            categories = {_("STRUCTURE")},
         },
         type = mType,
         order = {
-            value = order,
+            value = 5,
         },
         metadata = {
             isTrack = false,

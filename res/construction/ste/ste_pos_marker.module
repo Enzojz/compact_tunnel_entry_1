@@ -13,7 +13,7 @@ data = function()
             description = _("DESC_MARKER"),
         },
         category = {
-            categories = {"track"},
+            categories = {_("STRUCTURE")},
         },
         type = "ste_marker",
         order = {

@@ -33,7 +33,7 @@ return function(modelWall, modelFence, wallWidth, desc, order)
             },
             description = desc,
             category = {
-                categories = {"track"},
+                categories = {_("STRUCTURE")},
             },
             type = mType,
             order = {

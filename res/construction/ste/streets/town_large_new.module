@@ -1,0 +1,10 @@
+local fn = require "ste_track_module"
+local desc = {
+    name = _("Large street"),
+    description = _("Large street"),
+    icon = "ui/streets/standard/town_large_new.tga"
+}
+
+local trackWidth = 24
+
+data = fn(trackWidth, "standard/town_large_new.lua", false, desc, 3, true)
