@@ -7,4 +7,4 @@ local desc = {
 
 local trackWidth = 9
 
-data = fn(trackWidth, "standard/town_small_one_way_new.lua", false, desc, 11, true, true)
+data = fn(trackWidth, "standard/town_small_one_way_new.lua", false, desc, 11, true, true, true)

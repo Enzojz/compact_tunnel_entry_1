@@ -1,4 +1,3 @@
-local dump = require "luadump"
 function data()
     return {
         info = {
@@ -17,12 +16,13 @@ function data()
             },
             tags = {"Street Construction", "Tunnel"},
         }
-    --     runFn = function(settings)
+    --     ,runFn = function(settings)
     --         addModifier("loadStreet", 
     --             function(fileName, data)
     --                 local width = data.streetWidth + data.sidewalkWidth * 2
     --                 local fname = string.match(fileName, "standard/([a-zA-Z_]+).lua")
     --                 if (fname) then
+    --                     print(fname)
     --                 local s = string.format([[
     -- local fn = require "ste_track_module"
     -- local desc = {

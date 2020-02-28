@@ -3,7 +3,6 @@ local coor = require "ste/coor"
 local pipe = require "ste/pipe"
 local general = require "ste/general"
 local ste = require "ste"
-local dump = require "luadump"
 local mType = "ste_track"
 
 local fitModels = {
@@ -17,7 +16,7 @@ local wallTypes = {
     "ste/brick_2_fence"
 }
 
-return function(trackWidth, trackType, catenary, desc, order, isStreet)
+return function(trackWidth, trackType, catenary, desc, order, isStreet, isOneWay, isRev)
     return function()
         return {
             availability = {
@@ -30,7 +29,7 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
             },
             description = desc,
             category = {
-                categories = {isStreet and _("STREET") or _("TRACK")},
+                categories = {isStreet and (isOneWay and (isRev and _("ONE_WAY_REV") or _("ONE_WAY")) or _("STREET")) or _("TRACK")},
             },
             type = mType,
             order = {
@@ -54,6 +53,9 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                 local isSurface = info.typeId == 1
                 local isUnderground = info.typeId == 2
                 local isParallel = info.typeId == 3
+
+                local isRev = isRev or false
+                if isUnderground then isRev = not isRev end
                 
                 local nSeg = isUnderground and coords.underground.nSeg or isSurface and coords.surface.nSeg or isParallel and coords.surface.nSeg
                 local segLength = isUnderground and coords.underground.segLength or isSurface and coords.surface.segLength or isParallel and coords.surface.segLength
@@ -62,6 +64,7 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                 
                 posMark = posMark and posMark.y or nSeg
                 if posMark > nSeg then posMark = nSeg end
+                if posMark < 4 then posMark = 3 end
 
                 if not (isUnderground and coords.underground.edge or isSurface and coords.surface.edge or isParallel and coords.surface.edge) then
                     local refArc = isUnderground and arcs.underground or isSurface and arcs.surface or isParallel and arcs.top
@@ -95,8 +98,19 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                 
                 local edge = 
                     (isUnderground and coords.underground.edge or isSurface and coords.surface.edge or isParallel and coords.surface.edge)
-                    * function(e) return {e[1][1], e[posMark][2], e[posMark][2], e[posMark * 2][2]} end
-                    * pipe.map(function(f) return f(posMark * segLength * 0.5) end)
+                    * function(e)
+                        local length3 = isRev and -segLength or segLength
+                        local length1 = 0.5 * posMark * length3
+                        local length2 = length1 - length3
+                        return {
+                            e[1][1](length1), 
+                            e[posMark][2](length1), 
+                            e[posMark][2](length2), 
+                            e[posMark * 2 - 1][2](length2), 
+                            e[posMark * 2][1](length3), 
+                            e[posMark * 2][2](length3)} 
+                    end
+                    * (isRev and pipe.rev() or pipe.noop())
                     * pipe.map(pipe.map(coor.vec2Tuple))
                 
                 local edges = {
@@ -109,9 +123,9 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                     edgeType = isUnderground and "TUNNEL" or nil,
                     edgeTypeName = isUnderground and "ste_void.lua" or nil,
                     edges = edge,
-                    snapNodes = isParallel and {0, 3} or {3},
+                    snapNodes = isParallel and {0, 5} or {isRev and 0 or 5},
                     tag2nodes = {
-                        [tag] = {0, 1, 2, 3}
+                        [tag] = {0, 1, 2, 3, 4, 5}
                     },
                     slot = slotId
                 }

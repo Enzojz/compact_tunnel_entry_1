@@ -11,13 +11,14 @@ data = function()
         description = {
             name = _("NAME_MARKER"),
             description = _("DESC_MARKER"),
+            icon = "ui/ste/adjuster.tga"
         },
         category = {
             categories = {_("STRUCTURE")},
         },
         type = "ste_marker",
         order = {
-            value = 1,
+            value = 99,
         },
         metadata = {
             isTrack = false,

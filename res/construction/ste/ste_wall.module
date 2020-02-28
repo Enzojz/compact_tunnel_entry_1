@@ -2,7 +2,7 @@ local fn = require "ste_wall_module"
 local desc = {
     name = _("MENU_WALL_NAME"),
     description = _("MENU_WALL_DESC"),
-    icon = "ui/construction/station/rail/modular_station/track.tga"
+    icon = "ui/ste/wall.tga"
 }
 
 data = fn(nil, nil, 0.5, desc, 1)

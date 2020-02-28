@@ -11,7 +11,6 @@ local fitModels = {
 
 local buildBeam = ste.buildSurface(fitModels.beam, coor.transZ(1))
 
-local dump = require "luadump"
 local width = 5
 data = function()
     return {
@@ -26,7 +25,7 @@ data = function()
         description = {
             name = _("MENU_CONCRETE_BEAM_NAME"),
             description = _("MENU_CONCRETE_BEAM_DESC"),
-            icon = "ui/construction/station/rail/modular_station/track.tga"
+            icon = "ui/ste/concrete_beam.tga"
         },
         category = {
             categories = {_("STRUCTURE")},

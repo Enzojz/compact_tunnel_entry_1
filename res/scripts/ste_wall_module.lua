@@ -19,7 +19,6 @@ local wallTypes = {
     "ste/brick_2_wall"
 }
 
-local dump = require "luadump"
 return function(modelWall, modelFence, wallWidth, desc, order)
     return function()
         return {

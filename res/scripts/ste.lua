@@ -3,7 +3,6 @@ local coor = require "ste/coor"
 local arc = require "ste/coorarc"
 local general = require "ste/general"
 local pipe = require "ste/pipe"
-local dump = require "luadump"
 
 local ste = {}
 
