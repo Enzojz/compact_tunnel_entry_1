@@ -25,12 +25,12 @@ function data()
                 wrapS = "REPEAT",
                 wrapT = "REPEAT",
             },
-            map_op_1 = {
-                fileName = "models/industry/overlay_textures/small_03.tga",
-                type = "TWOD",
-                wrapS = "REPEAT",
-                wrapT = "REPEAT",
-            },
+            -- map_op_1 = {
+            --     fileName = "models/industry/overlay_textures/small_03.tga",
+            --     type = "TWOD",
+            --     wrapS = "REPEAT",
+            --     wrapT = "REPEAT",
+            -- },
             map_op_2 = {
                 fileName = "streets/country_new_overlay.dds",
                 type = "TWOD",
@@ -40,11 +40,18 @@ function data()
             normal_scale = {
                 normalScale = 1,
             },
-            operation_1 = {
-                mode = "WORLD_XY",
-                op = "OVERLAY",
-                opacity = 0,
-                scale = {0.0049999998882413, 0.0049999998882413, },
+            map_op_1 =
+            {
+                fileName = "models/ste/op/xy.dds",
+                magFilter = "LINEAR",
+                minFilter = "LINEAR_MIPMAP_LINEAR",
+            },
+            operation_1 =
+            {
+                op = "MULTIPLICATION",
+                mode = "NORMAL",
+                scale = { 0.5, 0.5 },
+                opacity = -300.0
             },
             operation_2 = {
                 mode = "WORLD_XY",
@@ -53,8 +60,8 @@ function data()
                 scale = {0.0049999998882413, 0.0049999998882413, },
             },
             polygon_offset = {
-                factor = 2,
-                units = 2,
+                factor = -2,
+                units = -2,
                 forceDepthWrite = true,
             },
             two_sided = {

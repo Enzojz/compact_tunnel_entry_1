@@ -21,7 +21,7 @@ function data() return {
         children = {
           {
             materials = {
-              "ste/paving.mtl"
+              "ste/cover.mtl"
             },
             mesh = "ste/surface_br.msh",
             transf = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 }

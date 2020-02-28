@@ -141,15 +141,13 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                         coords.surface.base = {lc = ste.interlace(lc), rc = ste.interlace(rc)}
                     end
                     
-                    if (not isStreet) then
-                        for i = 1, posMark do
-                            local baseL = coords.surface.base.lc[i]
-                            local baseR = coords.surface.base.rc[i]
-                            local buildSurface = ste.buildSurface(fitModels.surface, coor.I())
-                            
-                            local surface = buildSurface()(nil, "ste/surface", baseL, baseR) * withTag
-                            result.models = result.models + surface
-                        end
+                    for i = 1, posMark do
+                        local baseL = coords.surface.base.lc[i]
+                        local baseR = coords.surface.base.rc[i]
+                        local buildSurface = ste.buildSurface(fitModels.surface, coor.I())
+                        
+                        local surface = buildSurface()(nil, "ste/surface", baseL, baseR) * withTag
+                        result.models = result.models + surface
                     end
 
                     local buildFence = ste.buildSurface(fitModels.fence, coor.scaleZ(2) * coor.transZ(1))
@@ -185,6 +183,24 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet)
                             rc = func.map(rc, function(c) return c + coor.xyz(0, 0, 8.5) end)
                         }
                     end
+
+                    local buildCover = ste.buildSurface(fitModels.surface, coor.I())
+                    local lc, rc = coords.underground.top.lc, coords.underground.top.rc
+                    local face = {
+                        {i = lc[1], s = lc[1] + func.with(lc[2] - lc[1], { z = 0 }) * 0.75},
+                        {i = rc[1], s = rc[1] + func.with(rc[2] - rc[1], { z = 0 }) * 0.75}
+                    }
+                    local surface = buildCover()(
+                        nil,
+                        "ste/cover",
+                        table.unpack(face)
+                    )
+                    result.models = result.models + withTag(surface)
+                    
+                    local size = ste.assembleSize(table.unpack(face))
+                    local terrainEql = func.map({size.lt, size.lb, size.rb, size.rt}, coor.vec2Tuple)
+                    table.insert(result.terrainAlignmentLists, {type = "EQUAL", faces = {terrainEql}})
+
                 end
                 
             end,

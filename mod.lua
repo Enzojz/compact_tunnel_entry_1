@@ -1,6 +1,4 @@
 local dump = require "luadump"
-local wr = require "luadump2"
-
 function data()
     return {
         info = {

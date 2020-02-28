@@ -241,8 +241,8 @@ ste.buildSurface = function(fitModel, tZ)
             local sizeS = fnSize(i, ...)
             return s
                 and pipe.new
-                / func.with(general.newModel(s .. "_tl.mdl", tZ, fitModel(sizeS, true)), {pos = i})
-                / func.with(general.newModel(s .. "_br.mdl", tZ, fitModel(sizeS, false)), {pos = i})
+                / general.newModel(s .. "_tl.mdl", tZ, fitModel(sizeS, true))
+                / general.newModel(s .. "_br.mdl", tZ, fitModel(sizeS, false))
                 or pipe.new * {}
         end
     end
