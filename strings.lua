@@ -10,6 +10,10 @@ Known bug:
 - The street causes a lot of colission, sometimes not usable at all
 - The hole dig on the ground get a zigzags, which needed to fix with support from UG (still unknow if it can be fixed or not)
 
+Changelog:
+1.1
+- Added detacher to detach track/street from the construction for further editing.
+- Fixed crash with track/street upgrading tools.
 
 ----------------------------------------------------------------------
 
@@ -31,6 +35,11 @@ local descCN = [[本模组可以以紧凑的方式建造铁路或者街道隧道
 - 街道经常会引发冲突，有时候甚至完全没法使用
 - 地面上开的洞的边缘会带有锯齿，这个问题需要UG去解决（并且不清楚是否可能解决）
 
+更新记录:
+1.1
+- 新增分离工具方便轨道和街道的后续编辑
+- 修正了使用轨道和道路升级工具时的崩溃情况
+
 武汉加油！
 愿人类战胜病毒！
 ]]
@@ -42,6 +51,11 @@ local descTC = [[本模組可以以緊湊的方式建造鐵路或者街道隧道
 已知Bug:
 - 街道經常會引發衝突，有時候甚至完全沒法使用
 - 地面上開的洞的邊緣會帶有鋸齒，這個問題需要UG去解決（並且不清楚是否可能解決）
+
+更新記錄:
+1.1
+- 新增分離工具方便軌道和街道的後續編輯
+- 修正了使用軌道和道路升級工具時的崩潰情況
 
 武漢加油！
 願人類戰勝病毒！
@@ -82,6 +96,9 @@ function data()
             
             MENU_ADJUST_LENGTH_SURFACE = "Surface pre-adjustment (%)",
             MENU_ADJUST_LENGTH_UNDERGROUND = "Underground pre-adjustment (%)",
+
+            FREENODE_MARKER = "Detacher",
+            DESC_FREENODE_MARKER = "Use detacher to detach track/street from the tunnel entry so that can be edited freely.",
 
             STRUCTURE = "Structures",
             TRACK = "Tracks",
@@ -139,6 +156,9 @@ function data()
             STREET = "街道",
             ONE_WAY = "单行道",
             ONE_WAY_REV = "反向单行道",
+
+            FREENODE_MARKER = "分离工具",
+            DESC_FREENODE_MARKER = "使用分离工具将轨道或道路从隧道入口的主体中分离出来，以便进行更深入的编辑",
             
             MENU_DEG_SURFACE = "地面部分转角 (°)",
             MENU_DEG_UNDERGROUND = "地下部分转角 (°)",
@@ -170,6 +190,10 @@ function data()
             MENU_WALL_NAME = "擋土牆",
             MENU_WALL_DESC = "在軌道或者街道兩側建造擋土牆。",
             
+            FREENODE_MARKER = "分離工具",
+            DESC_FREENODE_MARKER = "使用分離工具將軌道或道路從隧道入口的主體中分離出來，以便進行更深入的編輯",
+
+
             MENU_STREET_TYPE = "道路類型",
             MENU_LEFT_ROAD = "左側有道路",
             MENU_LEFT_ROAD = "右側有道路",

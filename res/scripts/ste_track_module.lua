@@ -54,6 +54,8 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet, isOneWay
                 local isUnderground = info.typeId == 2
                 local isParallel = info.typeId == 3
 
+                local isFree = params.modules[ste.slotId(info.pos, 6)] ~= nil
+
                 local isRev = isRev or false
                 if isUnderground then isRev = not isRev end
                 
@@ -114,18 +116,21 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet, isOneWay
                     * (isRev and pipe.rev() or pipe.noop())
                     * pipe.map(pipe.map(coor.vec2Tuple))
                 
+                
                 local edges = {
                     type = isStreet and "STREET" or "TRACK",
                     alignTerrain = isParallel,
                     params = {
                         type = trackType,
                         catenary = catenary,
+                        tramTrackType = params.tramTrack and (({"NO", "YES", "ELECTRIC"})[params.tramTrack + 1]) or nil
                     },
                     edgeType = isUnderground and "TUNNEL" or nil,
                     edgeTypeName = isUnderground and "ste_void.lua" or nil,
                     edges = edge,
-                    snapNodes = isParallel and {0, 5} or {isRev and 0 or 5},
-                    tag2nodes = {
+                    snapNodes = isFree and {} or (isParallel and {0, 5} or {isRev and 0 or 5}),
+                    freeNodes = isFree and {0, 1, 2, 3, 4, 5} or {},
+                    tag2nodes = isFree and {} or {
                         [tag] = {0, 1, 2, 3, 4, 5}
                     },
                     slot = slotId

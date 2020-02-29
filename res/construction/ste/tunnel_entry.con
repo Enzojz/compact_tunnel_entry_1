@@ -373,6 +373,38 @@ local createTemplateFn = function(params)
 end
 
 local upgradeFn = function(params)
+    local modules = {}
+    local slotId = params.slotId
+    if params.modules[slotId] then
+        local function SwapModule(from, to, ...)
+            if (from and to) then
+                if params.modules[slotId].name == from then
+                    table.insert(modules, {slotId, to})
+                elseif params.modules[slotId].name == to then
+                    table.insert(modules, {slotId, from})
+                else
+                    SwapModule(...)
+                end
+            end
+        end
+        
+        if (params.catenaryToggle == 1) then
+            SwapModule(
+                "ste/tracks/hs.module",
+                "ste/tracks/hs_catenary.module",
+                "ste/tracks/std.module",
+                "ste/tracks/std_catenary.module"
+        )
+        elseif (params.trackTypeToggle == 1) then
+            SwapModule(
+                "ste/tracks/std.module",
+                "ste/tracks/hs.module",
+                "ste/tracks/std_catenary.module",
+                "ste/tracks/hs_catenary.module"
+        )
+        end
+    end
+    return modules
 end
 
 
@@ -403,8 +435,8 @@ local updateFn = function(params)
     
     local addSlot = function(typeId, pos, coords, dep)
         local spacing = typeId == 4 and coor.xy(0.25, 2.5) or coor.xy(2.5, 2.5)
-        local type = typeId == 4 and "ste_wall" or typeId == 5 and "ste_beam" or "ste_track"
-        local coord = coords[1].s:avg(coords[1].i)
+        local type = typeId == 4 and "ste_wall" or typeId == 5 and "ste_beam" or typeId == 6 and "ste_freenode" or "ste_track"
+        local coord = (coords[1].s:avg(coords[1].i)) .. (typeId == 6 and coor.transZ(1) or coor.I())
         local id = ste.slotId(coor.xyz(pos, 0, 0), typeId)
         insert(result.slots, {
             id = id,
@@ -453,26 +485,32 @@ local updateFn = function(params)
         local pos = info.pos.x
         emptyPos = func.filter(emptyPos, function(p) return p ~= pos end)
         if (info.typeId == 1) then
-            local coords, sId = addSlot(info.typeId, pos, config.coords[pos].surface.coords)
-            addMarker(info.typeId, pos, coords, config.coords[pos].surface.nSeg, sId)
+            if not params.modules[ste.slotId(info.pos, 6)] then
+                local coords, sId = addSlot(info.typeId, pos, config.coords[pos].surface.coords)
+                addMarker(info.typeId, pos, coords, config.coords[pos].surface.nSeg, sId)
+                addSlot(6, pos, coords, sId)
+                if not params.modules[ste.slotId(info.pos, 5)] then
+                    addSlot(5, pos, config.coords[pos].top.coords)
+                end
 
-            if not params.modules[ste.slotId(info.pos, 5)] then
-                addSlot(5, pos, config.coords[pos].top.coords)
-            end
-
-            if not params.modules[ste.slotId(info.pos, 2)] then
-                addSlot(2, pos, config.coords[pos].underground.coords)
+                if not params.modules[ste.slotId(info.pos, 2)] then
+                    addSlot(2, pos, config.coords[pos].underground.coords)
+                end
             end
         elseif (info.typeId == 2) then
-            local coords, sId = addSlot(info.typeId, pos, config.coords[pos].underground.coords)
-            addMarker(info.typeId, pos, coords, config.coords[pos].underground.nSeg, sId)
-            
-            if not params.modules[ste.slotId(info.pos, 1)] then
-                addSlot(1, pos, config.coords[pos].surface.coords)
+            if not params.modules[ste.slotId(info.pos, 6)] then
+                local coords, sId = addSlot(info.typeId, pos, config.coords[pos].underground.coords)
+                addMarker(info.typeId, pos, coords, config.coords[pos].underground.nSeg, sId)
+                if not params.modules[ste.slotId(info.pos, 1)] then
+                    addSlot(1, pos, config.coords[pos].surface.coords)
+                end
             end
         elseif (info.typeId == 3) then
-            local coords, sId = addSlot(info.typeId, pos, config.coords[pos].top.coords)
-            addMarker(info.typeId, pos, coords, config.coords[pos].top.nSeg, sId)
+            if not params.modules[ste.slotId(info.pos, 6)] then
+                local coords, sId = addSlot(info.typeId, pos, config.coords[pos].top.coords)
+                addSlot(6, pos, coords, sId)
+                addMarker(info.typeId, pos, coords, config.coords[pos].top.nSeg, sId)
+            end
         elseif (info.typeId == 4) then
             local coords, sId = addSlot(info.typeId, pos, config.coords[pos].wall.coords)
             addMarker(info.typeId, pos, coords, config.coords[pos].wall.nSeg, sId)
@@ -545,7 +583,8 @@ local updateFn = function(params)
             addSlot(1, pos, config.coords[pos].surface.coords)
         end
     end
-    
+
+
     result.slotConfig = {
         ste_track = {
             maxModules = -1,
@@ -575,7 +614,7 @@ local updateFn = function(params)
         insert(result.terrainAlignmentLists, {type = "GREATER", faces = terrainGrt})
     end
     
-    result.callInvalidModules = false
+    result.callInvalidModules = true
     
     return result
 end

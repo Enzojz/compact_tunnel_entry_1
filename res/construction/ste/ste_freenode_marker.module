@@ -9,20 +9,20 @@ data = function()
             price = 0,
         },
         description = {
-            name = _("NAME_MARKER"),
-            description = _("DESC_MARKER"),
-            icon = "ui/ste/adjuster.tga"
+            name = _("FREENODE_MARKER"),
+            description = _("DESC_FREENODE_MARKER"),
+            icon = "ui/ste/freenode.tga"
         },
         category = {
             categories = {_("STRUCTURE")},
         },
-        type = "ste_marker",
+        type = "ste_freenode",
         order = {
-            value = 98,
+            value = 99,
         },
         metadata = {
             isTrack = false,
-            type = "ste_marker"
+            type = "ste_freenode"
         },
         
         updateFn = function(result, transform, tag, slotId, addModelFn, params) end,
