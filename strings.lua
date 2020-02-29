@@ -1,5 +1,9 @@
 local descEN = [[With this mod you get ability to build very compact tunnel entries, both for tracks and streets. You can use it to build kinds of junctions. The modular design enbales ability to build different layouts.
 
+The entries can be found under:
+1. Road -> Street -> Street Construction
+2. Rail -> Building -> Track Construction
+
 * This mod requires the shader enhancement mod.
 
 Known bug:
@@ -16,6 +20,10 @@ I wish a world without coronavirus.
 ]]
 
 local descCN = [[本模组可以以紧凑的方式建造铁路或者街道隧道入口。这种隧道通常用在一些小型立交中，模块化的设计帮助您创建各种不同的布局。
+
+项目在以下位置:
+1. 道路 -> 街道 -> 街道建设
+2. 轨道 -> 建筑 -> Track Construction
 
 * 本模组需要着色器增强的支持
 
@@ -94,7 +102,7 @@ function data()
         },
         zh_CN = {
             MOD_NAME = "紧凑隧道入口",
-            MOD_DESC = descTC,
+            MOD_DESC = descCN,
             MENU_NAME = "紧凑隧道入口",
             MENU_DESC = "一种可以用于制作小型立交的紧凑隧道入口，也可以用作普通的隧道入口。",
             TRACK_CONSTRUCTION = "轨道设施",
@@ -145,7 +153,7 @@ function data()
         },
         zh_TW = {
             MOD_NAME = "緊湊隧道入口",
-            MOD_DESC = descTW,
+            MOD_DESC = descTC,
             MENU_NAME = "緊湊隧道入口",
             TRACK_CONSTRUCTION = "軌道設施",
             MENU_DESC = "一種可以用於製作小型立交的緊湊隧道入口，也可以用作普通的隧道入口。",

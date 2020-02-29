@@ -690,7 +690,7 @@ function data()
         }
     
     return {
-        type = "RAIL_DEPOT",
+        type = "ASSET_DEFAULT",
         description = {
             name = _("MENU_NAME"),
             description = _("MENU_DESC")
