@@ -14,7 +14,7 @@ function data()
                     tfnetId = 27218,
                 }
             },
-            tags = {"Street Construction", "Tunnel"},
+            tags = {"Street Construction", "Tunnel", "Station", "Train Station", "Track Asset"},
         }
     --     ,runFn = function(settings)
     --         addModifier("loadStreet", 

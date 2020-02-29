@@ -14,7 +14,7 @@ local unpack = table.unpack
 local insert = table.insert
 
 local infi = 1e8
-local lengthList = func.seq(80, 400)
+local lengthList = func.seq(40, 400)
 local slopeList = {2.5, 5, 7.5, 10, 12.5, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 90, 100}
 local degList = func.seqMap({1, 1800}, function(d) return d / 10 end)
 local allDegList = pipe.new * degList * pipe.map(pipe.neg()) * pipe.rev() / 0 + degList
@@ -67,11 +67,11 @@ local function params()
             defaultIndex = (#allDegList - 1) / 2
         },
         {
-            key = "length",
+            key = "halfLength",
             name = _("MENU_LENGTH"),
             values = func.map(lengthList, tostring),
             uiType = "SLIDER",
-            defaultIndex = 69
+            defaultIndex = 110
         },
         {
             key = "portailHeight",
@@ -135,7 +135,7 @@ local config = function(params)
     local height = 8.5
     local portail = portailHeightList[params.portailHeight + 1]
     
-    local length = lengthList[params.length + 1]
+    local length = lengthList[params.halfLength + 1]
     local trackSlope = (height - portail) / length
     local wallSlope = portail / length
     
@@ -305,6 +305,7 @@ local createTemplateFn = function(params)
         function()
             local trackNb = trackNumberList[params.trackNb + 1]
             local trackType = trackTypeList[(params.catenary) + (params.highspeed) * 2 + 1]
+            local length = lengthList[params.halfLength + 1]
 
             local minPos = 50 - (trackNb % 2 == 1 and (trackNb - 1) / 2 or trackNb / 2)
             local maxPos = minPos + trackNb - 1
@@ -314,6 +315,19 @@ local createTemplateFn = function(params)
             for p = minPos, maxPos do
                 result[ste.slotId(coor.xyz(p, 0, 0), 1)] = trackType
                 result[ste.slotId(coor.xyz(p, 0, 0), 2)] = trackType
+                
+                if (params.adjustS < 99) then
+                    local adjustPosY = math.ceil(((params.adjustS + 1) * 0.01 * length) / 5)
+                    if adjustPosY < 3 then adjustPosY = 3 end
+                    result[ste.slotId(coor.xyz(p, adjustPosY < 3 and 3 or adjustPosY, 0), 8)] = "ste/ste_pos_marker.module"
+                end
+
+                if (params.adjustU < 99) then
+                    local adjustPosY = math.ceil(((params.adjustU + 1) * 0.01 * length) / 5)
+                    if adjustPosY < 3 then adjustPosY = 3 end
+                    result[ste.slotId(coor.xyz(p, adjustPosY < 3 and 3 or adjustPosY, 0), 9)] = "ste/ste_pos_marker.module"
+                end
+
             end
             
             result[ste.slotId(coor.xyz(minPos - 1, 0, 0), 4)] = "ste/ste_wall.module"
@@ -331,12 +345,24 @@ local createTemplateFn = function(params)
         end,
         function()
             local streetType = "ste/streets/" .. streetTypeList[params.streetType + 1] .. ".module"
-            
+            local length = lengthList[params.halfLength + 1]
             local result = {}
             
             result[ste.slotId(coor.xyz(50, 0, 0), 1)] = streetType
             result[ste.slotId(coor.xyz(50, 0, 0), 2)] = streetType
             
+            if (params.adjustS < 99) then
+                local adjustPosY = math.ceil(((params.adjustS + 1) * 0.01 * length) / 5)
+                if adjustPosY < 3 then adjustPosY = 3 end
+                result[ste.slotId(coor.xyz(50, adjustPosY < 3 and 3 or adjustPosY, 0), 8)] = "ste/ste_pos_marker.module"
+            end
+
+            if (params.adjustU < 99) then
+                local adjustPosY = math.ceil(((params.adjustU + 1) * 0.01 * length) / 5)
+                if adjustPosY < 3 then adjustPosY = 3 end
+                result[ste.slotId(coor.xyz(50, adjustPosY < 3 and 3 or adjustPosY, 0), 9)] = "ste/ste_pos_marker.module"
+            end
+
             result[ste.slotId(coor.xyz(49, 0, 0), 4)] = "ste/ste_wall.module"
             result[ste.slotId(coor.xyz(51, 0, 0), 4)] = "ste/ste_wall.module"
             
@@ -347,7 +373,8 @@ local createTemplateFn = function(params)
 end
 
 local upgradeFn = function(params)
-    end
+end
+
 
 local updateFn = function(params)
     if #func.keys(params.modules) == 0 then
@@ -605,6 +632,20 @@ function data()
                             values = {"0", "1"},
                             defaultIndex = 0
                         },
+                        {
+                            key ="adjustS",
+                            name = _("MENU_ADJUST_LENGTH_SURFACE"),
+                            values = func.seqMap({1, 100}, tostring),
+                            uiType = "SLIDER",
+                            defaultIndex = 99
+                        },
+                        {
+                            key ="adjustU",
+                            name = _("MENU_ADJUST_LENGTH_UNDERGROUND"),
+                            values = func.seqMap({1, 100}, tostring),
+                            uiType = "SLIDER",
+                            defaultIndex = 99
+                        }
                     }
                 },
             },
@@ -618,7 +659,7 @@ function data()
                 description = {
                     name = _("MENU_NAME"),
                     description = _("MENU_DESC"),
-                    icon = "ui/ste/ste.tga"
+                    icon = "ui/ste/ste_street.tga"
                 },
                 data = {
                     params = {
@@ -628,6 +669,20 @@ function data()
                             values = func.map(streetTypeList, function(s) return "ui/streets/standard/" .. s .. ".tga" end),
                             uiType = "ICON_BUTTON",
                             defaultIndex = 0
+                        },
+                        {
+                            key ="adjustS",
+                            name = _("MENU_ADJUST_LENGTH_SURFACE"),
+                            values = func.seqMap({1, 100}, tostring),
+                            uiType = "SLIDER",
+                            defaultIndex = 99
+                        },
+                        {
+                            key ="adjustU",
+                            name = _("MENU_ADJUST_LENGTH_UNDERGROUND"),
+                            values = func.seqMap({1, 100}, tostring),
+                            uiType = "SLIDER",
+                            defaultIndex = 99
                         }
                     }
                 },
@@ -635,15 +690,16 @@ function data()
         }
     
     return {
-        type = "RAIL_STATION",
+        type = "RAIL_DEPOT",
         description = {
             name = _("MENU_NAME"),
             description = _("MENU_DESC")
         },
-        -- categories = { "ste" },
+        categories = { "TRACK_CONSTRUCTION" },
         availability = {
-            yearFrom = 1860
+            yearFrom = 0
         },
+        order = 2000,
         -- buildMode = "MULTI",
         -- order = 27229,
         constructionTemplates = constructionTemplates,

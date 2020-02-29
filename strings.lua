@@ -46,6 +46,7 @@ function data()
             MOD_DESC = descEN,
             MENU_NAME = "Compact Tunnel Entry",
             MENU_DESC = "A compact tunnel entry for flying junctions, can be used as ordinary tunnel entry as well",
+            TRACK_CONSTRUCTION = "Track Constructions",
             MENU_CONCRETE_BEAM_NAME = "Concrete open trench beam",
             MENU_CONCRETE_BEAM_DESC = "Build some beam over the concrete open trench.",
             MENU_BRICK_WALL_NAME = "Brick retaining walls",
@@ -71,6 +72,9 @@ function data()
             MENU_TR_HS_CAT_NAME = "Electrified high-speed track",
             MENU_TR_HS_CAT_DESC = "High speed track with speed limit of 300km/h",
             
+            MENU_ADJUST_LENGTH_SURFACE = "Surface pre-adjustment (%)",
+            MENU_ADJUST_LENGTH_UNDERGROUND = "Underground pre-adjustment (%)",
+
             STRUCTURE = "Structures",
             TRACK = "Tracks",
             STREET = "Road",
@@ -93,6 +97,7 @@ function data()
             MOD_DESC = descTC,
             MENU_NAME = "紧凑隧道入口",
             MENU_DESC = "一种可以用于制作小型立交的紧凑隧道入口，也可以用作普通的隧道入口。",
+            TRACK_CONSTRUCTION = "轨道设施",
             MENU_CONCRETE_BEAM_NAME = "混凝土横梁",
             MENU_CONCRETE_BEAM_DESC = "在混凝土沟槽上方建造横梁。",
             MENU_BRICK_WALL_NAME = "砖式挡土墙",
@@ -117,6 +122,9 @@ function data()
             MENU_TR_HS_DESC = "限速300km/h的非电气化车站股道",
             MENU_TR_HS_CAT_NAME = "电气化高速股道",
             MENU_TR_HS_CAT_DESC = "限速300km/h的电气化车站股道",
+
+            MENU_ADJUST_LENGTH_SURFACE = "地面长度预调 (%)",
+            MENU_ADJUST_LENGTH_UNDERGROUND = "地下长度预调 (%)",
             
             STRUCTURE = "支撑结构",
             TRACK = "轨道",
@@ -139,6 +147,7 @@ function data()
             MOD_NAME = "緊湊隧道入口",
             MOD_DESC = descTW,
             MENU_NAME = "緊湊隧道入口",
+            TRACK_CONSTRUCTION = "軌道設施",
             MENU_DESC = "一種可以用於製作小型立交的緊湊隧道入口，也可以用作普通的隧道入口。",
             MENU_CONCRETE_BEAM_NAME = "混凝土橫樑",
             MENU_CONCRETE_BEAM_DESC = "在混凝土溝槽上方建造橫樑。",
@@ -164,6 +173,9 @@ function data()
             MENU_TR_HS_DESC = "限速300km/h的非電氣化車站股道",
             MENU_TR_HS_CAT_NAME = "電氣化高速股道",
             MENU_TR_HS_CAT_DESC = "限速300km/h的電氣化車站股道",
+
+            MENU_ADJUST_LENGTH_SURFACE = "地面長度預調 (%)",
+            MENU_ADJUST_LENGTH_UNDERGROUND = "地下長度預調 (%)",
             
             STRUCTURE = "支撐結構",
             TRACK = "軌道",

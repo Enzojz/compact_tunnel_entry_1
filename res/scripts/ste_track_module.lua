@@ -99,8 +99,9 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet, isOneWay
                 local edge = 
                     (isUnderground and coords.underground.edge or isSurface and coords.surface.edge or isParallel and coords.surface.edge)
                     * function(e)
-                        local length3 = isRev and -segLength or segLength
-                        local length1 = 0.5 * posMark * length3
+                        local segLength = isRev and -segLength or segLength
+                        local length3 = 0.5 * segLength
+                        local length1 = 0.5 * posMark * segLength
                         local length2 = length1 - length3
                         return {
                             e[1][1](length1), 
@@ -164,7 +165,7 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet, isOneWay
                         result.models = result.models + surface
                     end
 
-                    local buildFence = ste.buildSurface(fitModels.fence, coor.scaleZ(2) * coor.transZ(1))
+                    local buildFence = ste.buildSurface(fitModels.fence, coor.scaleZ(isStreet and 3.5 or 2) * coor.transZ(1))
                     
                     local biLatCoords = coords.top.biLatCoords
                     local lc, rc = biLatCoords(-trackWidth * 0.5, trackWidth * 0.5)
