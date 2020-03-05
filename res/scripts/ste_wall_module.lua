@@ -74,6 +74,25 @@ return function(modelWall, modelFence, wallWidth, desc, order)
 
                     result.models = result.models + wall + fence
                 end
+                
+                if (not result.config.coords[info.pos.x].wall.collider) then
+                    local lc, rc = biLatCoords(-wallWidth * 0.25, wallWidth * 0.25)
+                    result.config.coords[info.pos.x].wall.collider = {lc = lc, rc = rc}
+                end
+
+                table.insert(result.colliders, {
+                    type = "POINT_CLOUD",
+                    params = {
+                        points = func.map(
+                            func.concat(
+                                func.range(func.map(result.config.coords[info.pos.x].wall.coords, pipe.select("s")), 1, posMark),
+                                func.range(func.map(result.config.coords[info.pos.x].surface.coords, pipe.select("s")), 1, posMark)
+                            ),
+                            coor.vec2Tuple
+                        )
+                    }
+                })
+
             end,
             
             getModelsFn = function(params)

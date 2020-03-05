@@ -245,7 +245,7 @@ local config = function(params)
         if func.contains(allPos, pos) then
             local typeId = modules[pos].typeId
             if (typeId > 3) then
-                arcs[pos] = {wall = arcPackers.wall(offset)}
+                arcs[pos] = {wall = arcPackers.wall(offset), surface = arcPackers.surface(offset)}
                 coords[pos] = {offset = offset}
             else
                 arcs[pos] = {
@@ -430,7 +430,8 @@ local updateFn = function(params)
         groundFaces = {},
         slots = {},
         config = config,
-        dependentSlots = {}
+        dependentSlots = {},
+        colliders = {}
     }
     
     local addSlot = function(typeId, pos, coords, dep)
@@ -734,7 +735,7 @@ function data()
             name = _("MENU_NAME"),
             description = _("MENU_DESC")
         },
-        categories = { "TRACK_CONSTRUCTION" },
+        categories = { "track_construction" },
         availability = {
             yearFrom = 0
         },

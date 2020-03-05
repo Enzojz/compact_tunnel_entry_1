@@ -5,6 +5,8 @@ local general = require "ste/general"
 local ste = require "ste"
 local mType = "ste_track"
 
+local dump = require "luadump"
+
 local fitModels = {
     surface = ste.fitModel(5, 5, -1, true, true),
     fence = ste.fitModel(5, 0.5, 1, true, true)
@@ -220,7 +222,7 @@ return function(trackWidth, trackType, catenary, desc, order, isStreet, isOneWay
                     local size = ste.assembleSize(table.unpack(face))
                     local terrainEql = func.map({size.lt, size.lb, size.rb, size.rt}, coor.vec2Tuple)
                     table.insert(result.terrainAlignmentLists, {type = "EQUAL", faces = {terrainEql}})
-
+                    
                 end
                 
             end,

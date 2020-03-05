@@ -11,6 +11,10 @@ Known bug:
 - The hole dig on the ground get a zigzags, which needed to fix with support from UG (still unknow if it can be fixed or not)
 
 Changelog:
+1.2
+- Improved colission issue when connect the tunnel to existing tracks and streets
+- Improved colission issue when modifying the tunnel
+- Fxied wrong street module order
 1.1
 - Added detacher to detach track/street from the construction for further editing.
 - Fixed crash with track/street upgrading tools.
@@ -36,6 +40,10 @@ local descCN = [[本模组可以以紧凑的方式建造铁路或者街道隧道
 - 地面上开的洞的边缘会带有锯齿，这个问题需要UG去解决（并且不清楚是否可能解决）
 
 更新记录:
+1.2
+- 改善了与既有轨道或街道连接时的冲突问题
+- 改善了修改隧道入口时的冲突问题
+- 修正了错误的街道模块顺序
 1.1
 - 新增分离工具方便轨道和街道的后续编辑
 - 修正了使用轨道和道路升级工具时的崩溃情况
@@ -53,6 +61,10 @@ local descTC = [[本模組可以以緊湊的方式建造鐵路或者街道隧道
 - 地面上開的洞的邊緣會帶有鋸齒，這個問題需要UG去解決（並且不清楚是否可能解決）
 
 更新記錄:
+1.2
+- 改善了與既有軌道或街道連接時的衝突問題
+- 改善了修改隧道入口時的衝突問題
+- 修正了錯誤的街道模組順序
 1.1
 - 新增分離工具方便軌道和街道的後續編輯
 - 修正了使用軌道和道路升級工具時的崩潰情況
