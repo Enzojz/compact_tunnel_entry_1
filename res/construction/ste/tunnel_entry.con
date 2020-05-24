@@ -1,7 +1,6 @@
 local func = require "ste/func"
 local coor = require "ste/coor"
 local line = require "ste/coorline"
-local arc = require "ste/coorarc"
 local quat = require "ste/quaternion"
 local pipe = require "ste/pipe"
 local ste = require "ste"
@@ -163,35 +162,11 @@ local config = function(params)
             }
         end
         if (info.typeId == 8) then
-            if (not posMark[info.pos.x].surface) then
-                posMark[info.pos.x].surface = info.pos
-            elseif (posMark[info.pos.x].surface.z == 0 and info.pos.z == 1) then
-                posMark[info.pos.x].surface = info.pos
-            elseif (posMark[info.pos.x].surface.z == 1 and info.pos.z == 2) then
-                posMark[info.pos.x].surface = info.pos
-            elseif (posMark[info.pos.x].surface.z == 2 and info.pos.z == 0) then
-                posMark[info.pos.x].surface = info.pos
-            end
+            posMark[info.pos.x].surface = info.pos
         elseif (info.typeId == 9) then
-            if (not posMark[info.pos.x].underground) then
-                posMark[info.pos.x].underground = info.pos
-            elseif (posMark[info.pos.x].underground.z == 0 and info.pos.z == 1) then
-                posMark[info.pos.x].underground = info.pos
-            elseif (posMark[info.pos.x].underground.z == 1 and info.pos.z == 2) then
-                posMark[info.pos.x].underground = info.pos
-            elseif (posMark[info.pos.x].underground.z == 2 and info.pos.z == 0) then
-                posMark[info.pos.x].underground = info.pos
-            end
+            posMark[info.pos.x].underground = info.pos
         elseif (info.typeId == 7) then
-            if (not posMark[info.pos.x].beam) then
-                posMark[info.pos.x].beam = info.pos
-            elseif (posMark[info.pos.x].beam.z == 0 and info.pos.z == 1) then
-                posMark[info.pos.x].beam = info.pos
-            elseif (posMark[info.pos.x].beam.z == 1 and info.pos.z == 2) then
-                posMark[info.pos.x].beam = info.pos
-            elseif (posMark[info.pos.x].beam.z == 2 and info.pos.z == 0) then
-                posMark[info.pos.x].beam = info.pos
-            end
+            posMark[info.pos.x].beam = info.pos
         elseif (info.typeId < 5) then
             modules[info.pos.x] = func.with(
                 m.metadata,
@@ -372,6 +347,30 @@ local createTemplateFn = function(params)
     return fn[params.templateIndex + 1]()
 end
 
+local preProcessFn = function(modules, change)
+    if change.added then
+        local info = ste.slotInfo(change.slotId)
+        if (info.typeId > 6) then
+            local slotId = ste.slotId(info.pos, info.typeId)
+            for _, k in ipairs(func.keys(modules)) do
+                local sinfo = ste.slotInfo(k)
+                if (sinfo.typeId == info.typeId and sinfo.pos.x == info.pos.x) then
+                    modules[k] = nil
+                elseif (sinfo.pos.z > 0) then -- Move old markers to new id
+                    modules[ste.slotId(sinfo.pos, info.typeId)] = modules[k]
+                    modules[k] = nil
+                end
+            end
+            modules[slotId] = change.module
+        else
+            modules[change.slotId] = change.module
+        end
+    else
+        modules[change.slotId] = nil
+    end
+    return modules
+end
+
 local upgradeFn = function(params)
     local modules = {}
     local slotId = params.slotId
@@ -458,12 +457,11 @@ local updateFn = function(params)
         local spacing = typeId == 4 and coor.xy(0.2, 2) or coor.xy(2, 2)
         local typeMark = {8, 9, 8, 8, 7}
         if not posMark then posMark = coor.xyz(pos, nSeg, 0) end
-        local zMark = posMark.z < 2 and posMark.z + 1 or 0
         for i, coord in ipairs(coords) do
             if i > 2 then
                 local vec = (coord.s - coord.i):withZ(0)
                 local coord = coord.s:avg(coord.i)
-                local id = ste.slotId(i == posMark.y and posMark or coor.xyz(pos, i, zMark), typeMark[typeId])
+                local id = ste.slotId(i == posMark.y and posMark or coor.xyz(pos, i, 0), typeMark[typeId])
                 if dep then 
                     if not result.dependentSlots[dep] then result.dependentSlots[dep] = {} end 
                     table.insert(result.dependentSlots[dep], id)
@@ -615,7 +613,7 @@ local updateFn = function(params)
         insert(result.terrainAlignmentLists, {type = "GREATER", faces = terrainGrt})
     end
     
-    result.callInvalidModules = true
+    -- result.callInvalidModules = true
     
     return result
 end
@@ -748,7 +746,8 @@ function data()
         -- austemovable = false,
         params = params(),
         upgradeFn = upgradeFn,
-        updateFn = updateFn
+        updateFn = updateFn,
+        preProcessFn = preProcessFn
     }
 
 end

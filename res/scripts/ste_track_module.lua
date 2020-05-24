@@ -5,7 +5,7 @@ local general = require "ste/general"
 local ste = require "ste"
 local mType = "ste_track"
 
-local dump = require "luadump"
+-- local dump = require "luadump"
 
 local fitModels = {
     surface = ste.fitModel(5, 5, -1, true, true),

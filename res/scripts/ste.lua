@@ -17,7 +17,7 @@ local segmentLength = 20
 
 
 ste.slotId = function(pos, typeId)
-    return ((pos.y + pos.z * 100) * 100 + pos.x) * 10 + typeId
+    return (pos.y * 100 + pos.x) * 10 + typeId
 end
 
 ste.slotInfo = function(slotId)
