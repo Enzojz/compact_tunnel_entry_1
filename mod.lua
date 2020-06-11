@@ -1,3 +1,10 @@
+local dump = require "luadump"
+
+local nameIndices = {
+    ["standard.lua"] = "std",
+    ["high_speed.lua"] = "hs",
+}
+
 function data()
     return {
         info = {
@@ -16,31 +23,58 @@ function data()
                 }
             },
             tags = {"Street Construction", "Tunnel", "Station", "Train Station", "Track Asset"},
-        }
-    --     ,runFn = function(settings)
-    --         addModifier("loadStreet", 
-    --             function(fileName, data)
-    --                 local width = data.streetWidth + data.sidewalkWidth * 2
-    --                 local fname = string.match(fileName, "standard/([a-zA-Z_]+).lua")
-    --                 if (fname) then
-    --                     print(fname)
-    --                 local s = string.format([[
-    -- local fn = require "ste_track_module"
-    -- local desc = {
-    --     name = _("%s"),
-    --     description = _("%s"),
-    --     icon = "ui/streets/standard/%s.tga"
-    -- }
+        }, 
+        postRunFn = function(settings, params)
+            local tracks = api.res.trackTypeRep.getAll()
+            for __, trackName in pairs(tracks) do
+                local track = api.res.trackTypeRep.get(api.res.trackTypeRep.find(trackName))
+                for __, catenary in pairs({false, true}) do
+                    local mod = api.type.ModuleDesc.new()
+                    mod.fileName = "ste/tracks/" .. (nameIndices[trackName] or tostring(trackName)) .. (catenary and "_catenary" or "") .. ".module"
+                    
+                    mod.availability.yearFrom = track.yearFrom
+                    mod.availability.yearTo = track.yearTo
+                    mod.cost.price = math.round(track.cost / 75 * 18000)
+                    
+                    mod.description.name = track.name .. (catenary and _(" with catenary") or "")
+                    mod.description.description = track.desc .. (catenary and _(" (with catenary)") or "")
+                    mod.description.icon = track.icon
+                    
+                    mod.type = "ste_track"
+                    mod.order.value = 0 + 10 * (catenary and 1 or 0)
+                    mod.metadata = {
+                        isTrack = true,
+                        width = track.trackDistance,
+                        type = "ste_track"
+                    }
 
-    -- local trackWidth = %d
+                    mod.category.categories = catenary and {_("TRACK_CAT")} or {_("TRACK")}
 
-    -- data = fn(trackWidth, "standard/%s.lua", false, desc, 1, true)]], data.name, data.name, fname, width, fname)
-    --                 local file = io.open("ste/" .. fname .. ".module", "w")
-    --                 file:write(s)
-    --                 file:close()
-    --             end
-    --             return data
-    --         end)
-    --     end
+                    mod.updateScript.fileName = "construction/ste/trackmodule.updateFn"
+                    mod.updateScript.params = {
+                        trackType = trackName,
+                        catenary = catenary,
+                        width = track.trackDistance
+                    }
+                    mod.getModelsScript.fileName = "construction/ste/trackmodule.getModelsFn"
+                    mod.getModelsScript.params = {}
+                    
+                    api.res.moduleRep.add(mod.fileName, mod, true)
+                end
+            end
+
+            
+            -- local streets = api.res.streetTypeRep.getAll()
+            -- dump()(streets)
+            -- for __, streetName in pairs(streets) do
+            --     local street = api.res.streetTypeRep.get(api.res.streetTypeRep.find(streetName))
+            --     if (#street.categories > 0) then
+            --         local mod = api.type.ModuleDesc.new()
+            --         for i = 1, #street.laneConfigs do
+            --         end
+            --     else
+            --     end
+            -- end
+        end
     }
 end
