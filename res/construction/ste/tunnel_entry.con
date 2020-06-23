@@ -5,7 +5,7 @@ local quat = require "ste/quaternion"
 local pipe = require "ste/pipe"
 local ste = require "ste"
 
-local dump = require "luadump"
+-- local dump = require "luadump"
 
 local math = math
 local pi = math.pi
@@ -436,7 +436,7 @@ local updateFn = function(params)
     }
     
     local addSlot = function(typeId, pos, coords, dep)
-        local spacing = typeId == 4 and coor.xy(0.25, 2.5) or coor.xy(2.5, 2.5)
+        local spacing = typeId == 4 and coor.xy(0.25, 2) or coor.xy(2, 2)
         local type = typeId == 4 and "ste_wall" or typeId == 5 and "ste_beam" or typeId == 6 and "ste_freenode" or "ste_track"
         local coord = (coords[1].s:avg(coords[1].i)) .. (typeId == 6 and coor.transZ(1) or coor.I())
         local id = ste.slotId(coor.xyz(pos, 0, 0), typeId)
@@ -584,8 +584,7 @@ local updateFn = function(params)
             addSlot(1, pos, config.coords[pos].surface.coords)
         end
     end
-
-    dump()(result.slots)
+    
     -- result.slotConfig = {
     --     ste_track = {
     --         maxModules = -1,
