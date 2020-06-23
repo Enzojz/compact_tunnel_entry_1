@@ -11,6 +11,9 @@ Known bug:
 - The hole dig on the ground get a zigzags, which needed to fix with support from UG (still unknow if it can be fixed or not)
 
 Changelog:
+1.3
+- Compatibility with modded tracks and streets
+- Improvement of slot state machine
 1.2
 - Improved colission issue when connect the tunnel to existing tracks and streets
 - Improved colission issue when modifying the tunnel
@@ -40,6 +43,9 @@ local descCN = [[本模组可以以紧凑的方式建造铁路或者街道隧道
 - 地面上开的洞的边缘会带有锯齿，这个问题需要UG去解决（并且不清楚是否可能解决）
 
 更新记录:
+1.3
+- 增加了对模组轨道和道路的支持
+- 改进了模块槽使用的状态机
 1.2
 - 改善了与既有轨道或街道连接时的冲突问题
 - 改善了修改隧道入口时的冲突问题
@@ -95,16 +101,6 @@ function data()
             MENU_WALL_DESC = "Build retaining walls at sides or between tracks.",
             
             MENU_STREET_TYPE = "Road Type",
-            MENU_LEFT_ROAD = "Road on the left",
-            MENU_LEFT_ROAD = "Road on the right",
-            MENU_TR_STD_NAME = "Standard track",
-            MENU_TR_STD_DESC = "Standard track with speed limit of 120km/h",
-            MENU_TR_STD_CAT_NAME = "Electrified track",
-            MENU_TR_STD_CAT_DESC = "Electrified track with speed limit of 120km/h",
-            MENU_TR_HS_NAME = "High-speed track",
-            MENU_TR_HS_DESC = "Non-electrified high speed track with speed limit of 300km/h",
-            MENU_TR_HS_CAT_NAME = "Electrified high-speed track",
-            MENU_TR_HS_CAT_DESC = "High speed track with speed limit of 300km/h",
             
             MENU_ADJUST_LENGTH_SURFACE = "Surface pre-adjustment (%)",
             MENU_ADJUST_LENGTH_UNDERGROUND = "Underground pre-adjustment (%)",
@@ -114,6 +110,7 @@ function data()
 
             STRUCTURE = "Structures",
             TRACK = "Tracks",
+            TRACK_CAT = "Tracks (Elec.)",
             STREET = "Road",
             ONE_WAY = "One way",
             ONE_WAY_REV = "One way (Rev.)",
@@ -149,25 +146,16 @@ function data()
             MENU_WALL_DESC = "在轨道或者街道两侧建造挡土墙。",
             
             MENU_STREET_TYPE = "道路类型",
-            MENU_LEFT_ROAD = "左侧有道路",
-            MENU_LEFT_ROAD = "右侧有道路",
-            MENU_TR_STD_NAME = "普速股道",
-            MENU_TR_STD_DESC = "限速120km/h的非电气化车站股道",
-            MENU_TR_STD_CAT_NAME = "电气化普速股道",
-            MENU_TR_STD_CAT_DESC = "限速120km/h的电气化车站股道",
-            MENU_TR_HS_NAME = "高速股道",
-            MENU_TR_HS_DESC = "限速300km/h的非电气化车站股道",
-            MENU_TR_HS_CAT_NAME = "电气化高速股道",
-            MENU_TR_HS_CAT_DESC = "限速300km/h的电气化车站股道",
 
             MENU_ADJUST_LENGTH_SURFACE = "地面长度预调 (%)",
             MENU_ADJUST_LENGTH_UNDERGROUND = "地下长度预调 (%)",
             
             STRUCTURE = "支撑结构",
             TRACK = "轨道",
+            TRACK_CAT = "轨道 (电)",
             STREET = "街道",
             ONE_WAY = "单行道",
-            ONE_WAY_REV = "反向单行道",
+            ONE_WAY_REV = "单行道 (反)",
 
             FREENODE_MARKER = "分离工具",
             DESC_FREENODE_MARKER = "使用分离工具将轨道或道路从隧道入口的主体中分离出来，以便进行更深入的编辑",
@@ -207,30 +195,21 @@ function data()
 
 
             MENU_STREET_TYPE = "道路類型",
-            MENU_LEFT_ROAD = "左側有道路",
-            MENU_LEFT_ROAD = "右側有道路",
-            MENU_TR_STD_NAME = "普速股道",
-            MENU_TR_STD_DESC = "限速120km/h的非電氣化車站股道",
-            MENU_TR_STD_CAT_NAME = "電氣化普速股道",
-            MENU_TR_STD_CAT_DESC = "限速120km/h的電氣化車站股道",
-            MENU_TR_HS_NAME = "高速股道",
-            MENU_TR_HS_DESC = "限速300km/h的非電氣化車站股道",
-            MENU_TR_HS_CAT_NAME = "電氣化高速股道",
-            MENU_TR_HS_CAT_DESC = "限速300km/h的電氣化車站股道",
 
             MENU_ADJUST_LENGTH_SURFACE = "地面長度預調 (%)",
             MENU_ADJUST_LENGTH_UNDERGROUND = "地下長度預調 (%)",
             
             STRUCTURE = "支撐結構",
             TRACK = "軌道",
+            TRACK_CAT = "軌道 (電)",
             STREET = "街道",
             ONE_WAY = "單行道",
-            ONE_WAY_REV = "反向單行道",
+            ONE_WAY_REV = "單行道 (反)",
             
             MENU_DEG_SURFACE = "地面部分轉角 (°)",
             MENU_DEG_UNDERGROUND = "地下部分轉角 (°)",
-            MENU_LENGTH = "長度 (米)",
-            MENU_PORTAIL_HEIGHT = "入口參考高度 (米)",
+            MENU_LENGTH = "長度 (公尺)",
+            MENU_PORTAIL_HEIGHT = "入口參考高度 (公尺)",
             MENU_WALL_STYLE = "支撐結構材料",
             MENU_TRACK_NR = "軌道數",
             MENU_TRACK_CAT = "電氣化軌道",
