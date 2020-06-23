@@ -14,6 +14,7 @@ Changelog:
 1.3
 - Compatibility with modded tracks and streets
 - Improvement of slot state machine
+- Bugfix for disappeared slots with new version of the game 
 1.2
 - Improved colission issue when connect the tunnel to existing tracks and streets
 - Improved colission issue when modifying the tunnel
@@ -46,6 +47,7 @@ local descCN = [[本模组可以以紧凑的方式建造铁路或者街道隧道
 1.3
 - 增加了对模组轨道和道路的支持
 - 改进了模块槽使用的状态机
+- 修正了新版下一些模块槽消失的问题
 1.2
 - 改善了与既有轨道或街道连接时的冲突问题
 - 改善了修改隧道入口时的冲突问题
@@ -60,6 +62,10 @@ local descCN = [[本模组可以以紧凑的方式建造铁路或者街道隧道
 
 local descTC = [[本模組可以以緊湊的方式建造鐵路或者街道隧道入口。這種隧道通常用在一些小型立交中，模組化的設計幫助您創建各種不同的佈局。
 
+項目在以下位置:
+1. 道路 -> 街道 -> 街道建設
+2. 軌道 -> 建築 -> Track Construction
+
 * 本模組需要著色器增強的支援
 
 已知Bug:
@@ -67,6 +73,10 @@ local descTC = [[本模組可以以緊湊的方式建造鐵路或者街道隧道
 - 地面上開的洞的邊緣會帶有鋸齒，這個問題需要UG去解決（並且不清楚是否可能解決）
 
 更新記錄:
+1.3
+- 增加了對模組軌道和道路的支持
+- 改進了模組槽使用的狀態機
+- 修正了新版下一些模組槽消失的問題
 1.2
 - 改善了與既有軌道或街道連接時的衝突問題
 - 改善了修改隧道入口時的衝突問題
