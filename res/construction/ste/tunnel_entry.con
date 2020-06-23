@@ -5,6 +5,8 @@ local quat = require "ste/quaternion"
 local pipe = require "ste/pipe"
 local ste = require "ste"
 
+local dump = require "luadump"
+
 local math = math
 local pi = math.pi
 local abs = math.abs
@@ -583,19 +585,19 @@ local updateFn = function(params)
         end
     end
 
-
-    result.slotConfig = {
-        ste_track = {
-            maxModules = -1,
-            message = "",
-            skipCollisionCheck = true,
-        },
-        ste_wall = {
-            maxModules = -1,
-            message = "",
-            skipCollisionCheck = true,
-        }
-    }
+    dump()(result.slots)
+    -- result.slotConfig = {
+    --     ste_track = {
+    --         maxModules = -1,
+    --         message = "",
+    --         skipCollisionCheck = true,
+    --     },
+    --     ste_wall = {
+    --         maxModules = -1,
+    --         message = "",
+    --         skipCollisionCheck = true,
+    --     }
+    -- }
     
     result.terminateConstructionHook = function()
         local terrainEql = {}

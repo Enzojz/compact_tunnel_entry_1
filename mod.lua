@@ -1,4 +1,4 @@
-local dump = require "luadump"
+-- local dump = require "luadump"
 local func = require "ste/func"
 
 local trackIndices = {
@@ -80,13 +80,13 @@ function data()
                     
                     mod.category.categories = catenary and {_("TRACK_CAT")} or {_("TRACK")}
                     
-                    mod.updateScript.fileName = "construction/ste/trackmodule.updateFn"
+                    mod.updateScript.fileName = "construction/ste/ste_track_module.updateFn"
                     mod.updateScript.params = {
                         trackType = trackName,
                         catenary = catenary,
                         width = track.trackDistance
                     }
-                    mod.getModelsScript.fileName = "construction/ste/trackmodule.getModelsFn"
+                    mod.getModelsScript.fileName = "construction/ste/ste_track_module.getModelsFn"
                     mod.getModelsScript.params = {}
                     
                     api.res.moduleRep.add(mod.fileName, mod, true)
@@ -96,15 +96,15 @@ function data()
             local streets = api.res.streetTypeRep.getAll()
             for __, streetName in pairs(streets) do
                 local street = api.res.streetTypeRep.get(api.res.streetTypeRep.find(streetName))
-                if (#street.categories > 0) then
+                if (#street.categories > 0 and not streetName:match("street_depot/") and not streetName:match("street_station/")) then
                     local nBackward = #func.filter(street.laneConfigs, function(l) return (l.forward == false) end)
                     local isOneWay = nBackward == 0
                     for i = 1, (isOneWay and 2 or 1) do
                         local isRev = i == 2
                         local mod = api.type.ModuleDesc.new()
                         mod.fileName = ("ste/streets/%s%s.module"):format(streetName:match("(.+).lua"), isRev and "_rev" or "")
-                        local hasIndice = streetName[mod.fileName]
-                        if hasIndice then mod.fileName = streetName[mod.fileName] end
+                        local hasIndice = streetIndices[mod.fileName]
+                        if hasIndice then mod.fileName = streetIndices[mod.fileName] end
                         
                         mod.availability.yearFrom = street.yearFrom
                         mod.availability.yearTo = street.yearTo
@@ -124,7 +124,7 @@ function data()
                         
                         mod.category.categories = {isRev and _("ONE_WAY_REV") or isOneWay and _("ONE_WAY") or _("STREET")}
                         
-                        mod.updateScript.fileName = "construction/ste/trackmodule.updateFn"
+                        mod.updateScript.fileName = "construction/ste/ste_track_module.updateFn"
                         mod.updateScript.params = {
                             isStreet = true,
                             isRev = isRev,
@@ -132,7 +132,7 @@ function data()
                             catenary = false,
                             width = street.streetWidth + street.sidewalkWidth * 2
                         }
-                        mod.getModelsScript.fileName = "construction/ste/trackmodule.getModelsFn"
+                        mod.getModelsScript.fileName = "construction/ste/ste_track_module.getModelsFn"
                         mod.getModelsScript.params = {}
                         
                         api.res.moduleRep.add(mod.fileName, mod, true)

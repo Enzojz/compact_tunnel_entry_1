@@ -20,7 +20,7 @@ data = function()
         },
         buildMode = "SINGLE",
         cost = {
-            price = 5000,
+            price = 50,
         },
         description = {
             name = _("MENU_CONCRETE_BEAM_NAME"),

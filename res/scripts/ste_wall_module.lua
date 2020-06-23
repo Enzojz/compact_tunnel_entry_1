@@ -28,7 +28,7 @@ return function(modelWall, modelFence, wallWidth, desc, order)
             },
             buildMode = "SINGLE",
             cost = {
-                price = 5000,
+                price = 50,
             },
             description = desc,
             category = {
