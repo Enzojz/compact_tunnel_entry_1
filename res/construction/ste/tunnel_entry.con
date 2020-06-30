@@ -376,27 +376,27 @@ end
 local upgradeFn = function(params)
     local modules = {}
     local slotId = params.slotId
-    if params.modules[slotId] then
-        local function SwapModule(from, to, ...)
-            if (from and to) then
-                if params.modules[slotId].name == from then
-                    table.insert(modules, {slotId, to})
-                elseif params.modules[slotId].name == to then
-                    table.insert(modules, {slotId, from})
-                else
-                    SwapModule(...)
+    if params.modules[slotId] and params.modules[slotId].metadata.isTrack then
+        if (params.catenaryToggle == 1) then
+            local full = params.modules[slotId].name:match("(.+).module")
+            local cat = full:match("(.+)_catenary")
+            if cat then
+                table.insert(modules, {slotId, string.format("%s.module", cat)})
+            else
+                table.insert(modules, {slotId, string.format("%s_catenary.module", full)})
+            end
+        elseif (params.trackTypeToggle == 1) then
+            local function SwapModule(from, to, ...)
+                if (from and to) then
+                    if params.modules[slotId].name == from then
+                        table.insert(modules, {slotId, to})
+                    elseif params.modules[slotId].name == to then
+                        table.insert(modules, {slotId, from})
+                    else
+                        SwapModule(...)
+                    end
                 end
             end
-        end
-        
-        if (params.catenaryToggle == 1) then
-            SwapModule(
-                "ste/tracks/hs.module",
-                "ste/tracks/hs_catenary.module",
-                "ste/tracks/std.module",
-                "ste/tracks/std_catenary.module"
-        )
-        elseif (params.trackTypeToggle == 1) then
             SwapModule(
                 "ste/tracks/std.module",
                 "ste/tracks/hs.module",
@@ -407,7 +407,6 @@ local upgradeFn = function(params)
     end
     return modules
 end
-
 
 local updateFn = function(params)
     if #func.keys(params.modules) == 0 then

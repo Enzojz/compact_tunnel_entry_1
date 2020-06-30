@@ -11,6 +11,8 @@ Known bug:
 - The hole dig on the ground get a zigzags, which needed to fix with support from UG (still unknow if it can be fixed or not)
 
 Changelog:
+1.4
+- Ability to convert between electrified and non-elecrified track
 1.3
 - Compatibility with modded tracks and streets
 - Improvement of slot state machine
@@ -22,13 +24,6 @@ Changelog:
 1.1
 - Added detacher to detach track/street from the construction for further editing.
 - Fixed crash with track/street upgrading tools.
-
-----------------------------------------------------------------------
-
-Keep fighting, Wuhan!
-Keep fighting, all the world!
-
-I wish a world without coronavirus.
 ]]
 
 local descCN = [[本模组可以以紧凑的方式建造铁路或者街道隧道入口。这种隧道通常用在一些小型立交中，模块化的设计帮助您创建各种不同的布局。
@@ -44,6 +39,8 @@ local descCN = [[本模组可以以紧凑的方式建造铁路或者街道隧道
 - 地面上开的洞的边缘会带有锯齿，这个问题需要UG去解决（并且不清楚是否可能解决）
 
 更新记录:
+1.4
+- 对所有轨道有效接触网转换功能
 1.3
 - 增加了对模组轨道和道路的支持
 - 改进了模块槽使用的状态机
@@ -55,9 +52,6 @@ local descCN = [[本模组可以以紧凑的方式建造铁路或者街道隧道
 1.1
 - 新增分离工具方便轨道和街道的后续编辑
 - 修正了使用轨道和道路升级工具时的崩溃情况
-
-武汉加油！
-愿人类战胜病毒！
 ]]
 
 local descTC = [[本模組可以以緊湊的方式建造鐵路或者街道隧道入口。這種隧道通常用在一些小型立交中，模組化的設計幫助您創建各種不同的佈局。
@@ -73,6 +67,8 @@ local descTC = [[本模組可以以緊湊的方式建造鐵路或者街道隧道
 - 地面上開的洞的邊緣會帶有鋸齒，這個問題需要UG去解決（並且不清楚是否可能解決）
 
 更新記錄:
+1.4
+- 對所有軌道有效接觸網轉換功能
 1.3
 - 增加了對模組軌道和道路的支持
 - 改進了模組槽使用的狀態機
@@ -84,9 +80,6 @@ local descTC = [[本模組可以以緊湊的方式建造鐵路或者街道隧道
 1.1
 - 新增分離工具方便軌道和街道的後續編輯
 - 修正了使用軌道和道路升級工具時的崩潰情況
-
-武漢加油！
-願人類戰勝病毒！
 ]]
 
 function data()
