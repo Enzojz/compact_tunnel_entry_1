@@ -2,43 +2,43 @@
 local func = require "ste/func"
 
 local trackIndices = {
-    ["standard.lua"] = "std",
-    ["high_speed.lua"] = "hs",
+    ["standard"] = "std",
+    ["high_speed"] = "hs",
 }
 
 local streetIndices = {
-    ["ste/streets/standard/country_large_new.module"] = "ste/streets/country_large_new.module",
-    ["ste/streets/standard/country_large_old.module"] = "ste/streets/country_large_old.module",
-    ["ste/streets/standard/country_large_one_way_new.module"] = "ste/streets/country_large_one_way_new.module",
-    ["ste/streets/standard/country_large_one_way_new_rev.module"] = "ste/streets/country_large_one_way_new_rev.module",
-    ["ste/streets/standard/country_medium_new.module"] = "ste/streets/country_medium_new.module",
-    ["ste/streets/standard/country_medium_old.module"] = "ste/streets/country_medium_old.module",
-    ["ste/streets/standard/country_medium_one_way_new.module"] = "ste/streets/country_medium_one_way_new.module",
-    ["ste/streets/standard/country_medium_one_way_new_rev.module"] = "ste/streets/country_medium_one_way_new_rev.module",
-    ["ste/streets/standard/country_small_new.module"] = "ste/streets/country_small_new.module",
-    ["ste/streets/standard/country_small_old.module"] = "ste/streets/country_small_old.module",
-    ["ste/streets/standard/country_small_one_way_new.module"] = "ste/streets/country_small_one_way_new.module",
-    ["ste/streets/standard/country_small_one_way_new_rev.module"] = "ste/streets/country_small_one_way_new_rev.module",
-    ["ste/streets/standard/country_x_large_new.module"] = "ste/streets/country_x_large_new.module",
-    ["ste/streets/standard/town_large_new.module"] = "ste/streets/town_large_new.module",
-    ["ste/streets/standard/town_large_old.module"] = "ste/streets/town_large_old.module",
-    ["ste/streets/standard/town_large_one_way_new.module"] = "ste/streets/town_large_one_way_new.module",
-    ["ste/streets/standard/town_large_one_way_new_rev.module"] = "ste/streets/town_large_one_way_new_rev.module",
-    ["ste/streets/standard/town_medium_new.module"] = "ste/streets/town_medium_new.module",
-    ["ste/streets/standard/town_medium_old.module"] = "ste/streets/town_medium_old.module",
-    ["ste/streets/standard/town_medium_one_way_new.module"] = "ste/streets/town_medium_one_way_new.module",
-    ["ste/streets/standard/town_medium_one_way_new_rev.module"] = "ste/streets/town_medium_one_way_new_rev.module",
-    ["ste/streets/standard/town_small_new.module"] = "ste/streets/town_small_new.module",
-    ["ste/streets/standard/town_small_old.module"] = "ste/streets/town_small_old.module",
-    ["ste/streets/standard/town_small_one_way_new.module"] = "ste/streets/town_small_one_way_new.module",
-    ["ste/streets/standard/town_small_one_way_new_rev.module"] = "ste/streets/town_small_one_way_rev.module",
-    ["ste/streets/standard/town_x_large_new.module"] = "ste/streets/town_x_large_new.module"
+    ["ste/streets/standard/country_large_new"] = "ste/streets/country_large_new",
+    ["ste/streets/standard/country_large_old"] = "ste/streets/country_large_old",
+    ["ste/streets/standard/country_large_one_way_new"] = "ste/streets/country_large_one_way_new",
+    ["ste/streets/standard/country_large_one_way_new_rev"] = "ste/streets/country_large_one_way_new_rev",
+    ["ste/streets/standard/country_medium_new"] = "ste/streets/country_medium_new",
+    ["ste/streets/standard/country_medium_old"] = "ste/streets/country_medium_old",
+    ["ste/streets/standard/country_medium_one_way_new"] = "ste/streets/country_medium_one_way_new",
+    ["ste/streets/standard/country_medium_one_way_new_rev"] = "ste/streets/country_medium_one_way_new_rev",
+    ["ste/streets/standard/country_small_new"] = "ste/streets/country_small_new",
+    ["ste/streets/standard/country_small_old"] = "ste/streets/country_small_old",
+    ["ste/streets/standard/country_small_one_way_new"] = "ste/streets/country_small_one_way_new",
+    ["ste/streets/standard/country_small_one_way_new_rev"] = "ste/streets/country_small_one_way_new_rev",
+    ["ste/streets/standard/country_x_large_new"] = "ste/streets/country_x_large_new",
+    ["ste/streets/standard/town_large_new"] = "ste/streets/town_large_new",
+    ["ste/streets/standard/town_large_old"] = "ste/streets/town_large_old",
+    ["ste/streets/standard/town_large_one_way_new"] = "ste/streets/town_large_one_way_new",
+    ["ste/streets/standard/town_large_one_way_new_rev"] = "ste/streets/town_large_one_way_new_rev",
+    ["ste/streets/standard/town_medium_new"] = "ste/streets/town_medium_new",
+    ["ste/streets/standard/town_medium_old"] = "ste/streets/town_medium_old",
+    ["ste/streets/standard/town_medium_one_way_new"] = "ste/streets/town_medium_one_way_new",
+    ["ste/streets/standard/town_medium_one_way_new_rev"] = "ste/streets/town_medium_one_way_new_rev",
+    ["ste/streets/standard/town_small_new"] = "ste/streets/town_small_new",
+    ["ste/streets/standard/town_small_old"] = "ste/streets/town_small_old",
+    ["ste/streets/standard/town_small_one_way_new"] = "ste/streets/town_small_one_way_new",
+    ["ste/streets/standard/town_small_one_way_new_rev"] = "ste/streets/town_small_one_way_rev",
+    ["ste/streets/standard/town_x_large_new"] = "ste/streets/town_x_large_new"
 }
 
 function data()
     return {
         info = {
-            minorVersion = 4,
+            minorVersion = 5,
             severityAdd = "NONE",
             severityRemove = "CRITICAL",
             name = _("MOD_NAME"),
@@ -55,12 +55,26 @@ function data()
             tags = {"Street Construction", "Tunnel", "Station", "Train Station", "Track Asset"},
         },
         postRunFn = function(settings, params)
-            local tracks = api.res.trackTypeRep.getAll()
-            for __, trackName in pairs(tracks) do
+            local tracks = {}
+            for __, trackName in pairs(api.res.trackTypeRep.getAll()) do
+                if trackName == "standard.lua" then
+                    table.insert(tracks, 1, trackName)
+                elseif trackName == "high_speed.lua" then
+                    table.insert(tracks, tracks[1] == "standard.lua" and 2 or 1, trackName)
+                else
+                    table.insert(tracks, trackName)
+                end
+            end
+            local trackModuleList = {}
+            local trackIconList = {}
+            local trackNames = {}
+            for __, trackName in ipairs(tracks) do
                 local track = api.res.trackTypeRep.get(api.res.trackTypeRep.find(trackName))
+                local trackName = trackName:match("(.+).lua")
+                local baseFileName = ("ste/tracks/%s"):format(trackIndices[trackName] or trackName)
                 for __, catenary in pairs({false, true}) do
                     local mod = api.type.ModuleDesc.new()
-                    mod.fileName = ("ste/tracks/%s%s.module"):format(trackIndices[trackName] or trackName, catenary and "_catenary" or "")
+                    mod.fileName = ("%s%s.module"):format(baseFileName, catenary and "_catenary" or "")
                     
                     mod.availability.yearFrom = track.yearFrom
                     mod.availability.yearTo = track.yearTo
@@ -91,20 +105,28 @@ function data()
                     
                     api.res.moduleRep.add(mod.fileName, mod, true)
                 end
+                table.insert(trackModuleList, baseFileName)
+                table.insert(trackIconList, track.icon)
+                table.insert(trackNames, track.name)
             end
             
             local streets = api.res.streetTypeRep.getAll()
+            local streetModuleList = {}
+            local streetIconList = {}
+            local streetNames = {}
             for __, streetName in pairs(streets) do
                 local street = api.res.streetTypeRep.get(api.res.streetTypeRep.find(streetName))
                 if (#street.categories > 0 and not streetName:match("street_depot/") and not streetName:match("street_station/")) then
                     local nBackward = #func.filter(street.laneConfigs, function(l) return (l.forward == false) end)
                     local isOneWay = nBackward == 0
+                    local baseFileName = ("ste/streets/%s"):format(streetName:match("(.+).lua"))
                     for i = 1, (isOneWay and 2 or 1) do
                         local isRev = i == 2
                         local mod = api.type.ModuleDesc.new()
-                        mod.fileName = ("ste/streets/%s%s.module"):format(streetName:match("(.+).lua"), isRev and "_rev" or "")
+                        mod.fileName = ("%s%s"):format(baseFileName, isRev and "_rev" or "")
                         local hasIndice = streetIndices[mod.fileName]
                         if hasIndice then mod.fileName = streetIndices[mod.fileName] end
+                        mod.fileName = mod.fileName .. ".module"
                         
                         mod.availability.yearFrom = street.yearFrom
                         mod.availability.yearTo = street.yearTo
@@ -137,8 +159,37 @@ function data()
                         
                         api.res.moduleRep.add(mod.fileName, mod, true)
                     end
+                    table.insert(streetModuleList, streetIndices[baseFileName] or baseFileName)
+                    table.insert(streetIconList, street.icon)
+                    table.insert(streetNames, street.name)
                 end
             end
+            
+            
+            local con = api.res.constructionRep.get(api.res.constructionRep.find("ste/tunnel_entry.con"))
+            for c = 1, #con.constructionTemplates do
+                local data = api.type.DynamicConstructionTemplate.new()
+                for i = 1, #con.constructionTemplates[c].data.params do
+                    local p = con.constructionTemplates[c].data.params[i]
+                    local param = api.type.ScriptParam.new()
+                    param.key = p.key
+                    param.name = p.name
+                    if (p.key == "trackType") then
+                        param.values = trackNames
+                    elseif (p.key == "streetType") then
+                        param.values = streetNames
+                    else
+                        param.values = p.values
+                    end
+                    param.defaultIndex = p.defaultIndex or 0
+                    param.uiType = p.uiType
+                    data.params[i] = param
+                end
+                con.constructionTemplates[c].data = data
+            end
+            
+            con.createTemplateScript.fileName = "construction/ste/create_template.fn"
+            con.createTemplateScript.params = {trackModuleList = trackModuleList, streetModuleList = streetModuleList, trackIconList = trackIconList, streetIconList = streetIconList}
         end
     }
 end

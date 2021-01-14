@@ -104,7 +104,7 @@ function data()
                 type = isStreet and "STREET" or "TRACK",
                 alignTerrain = isParallel,
                 params = {
-                    type = trackType,
+                    type = isStreet and (trackType) or (trackType .. ".lua"),
                     catenary = catenary,
                     tramTrackType = params.tramTrack and (({"NO", "YES", "ELECTRIC"})[params.tramTrack + 1]) or nil
                 },

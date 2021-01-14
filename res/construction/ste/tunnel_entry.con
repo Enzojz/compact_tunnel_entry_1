@@ -25,14 +25,6 @@ local rList = pipe.new * rList * pipe.map(pipe.neg()) * pipe.rev() / infi + rLis
 local trackNumberList = {1, 2, 3, 4, 5, 6, 7, 8, 10}
 local portailHeightList = func.seqMap({0, 30}, function(h) return h * 0.5 end)
 
-
-local trackTypeList = {
-    "ste/tracks/std.module",
-    "ste/tracks/std_catenary.module",
-    "ste/tracks/hs.module",
-    "ste/tracks/hs_catenary.module"
-}
-
 local streetTypeList = {
     "town_small_new",
     "town_medium_new",
@@ -144,7 +136,7 @@ local config = function(params)
         surface = allDegList[params.degS + 1] / 180 * math.pi,
         underground = allDegList[params.degU + 1] / 180 * math.pi
     }
-
+    
     local radius = {
         surface = rad.surface == 0 and infi or (length / rad.surface),
         underground = rad.underground == 0 and infi or (length / rad.underground)
@@ -277,78 +269,6 @@ local config = function(params)
     }
 end
 
-local createTemplateFn = function(params)
-    local fn = {
-        function()
-            local trackNb = trackNumberList[params.trackNb + 1]
-            local trackType = trackTypeList[(params.catenary) + (params.highspeed) * 2 + 1]
-            local length = lengthList[params.halfLength + 1]
-
-            local minPos = 50 - (trackNb % 2 == 1 and (trackNb - 1) / 2 or trackNb / 2)
-            local maxPos = minPos + trackNb - 1
-            
-            local result = {}
-            
-            for p = minPos, maxPos do
-                result[ste.slotId(coor.xyz(p, 0, 0), 1)] = trackType
-                result[ste.slotId(coor.xyz(p, 0, 0), 2)] = trackType
-                
-                if (params.adjustS < 99) then
-                    local adjustPosY = math.ceil(((params.adjustS + 1) * 0.01 * length) / 5)
-                    if adjustPosY < 3 then adjustPosY = 3 end
-                    result[ste.slotId(coor.xyz(p, adjustPosY < 3 and 3 or adjustPosY, 0), 8)] = "ste/ste_pos_marker.module"
-                end
-
-                if (params.adjustU < 99) then
-                    local adjustPosY = math.ceil(((params.adjustU + 1) * 0.01 * length) / 5)
-                    if adjustPosY < 3 then adjustPosY = 3 end
-                    result[ste.slotId(coor.xyz(p, adjustPosY < 3 and 3 or adjustPosY, 0), 9)] = "ste/ste_pos_marker.module"
-                end
-
-            end
-            
-            result[ste.slotId(coor.xyz(minPos - 1, 0, 0), 4)] = "ste/ste_wall.module"
-            result[ste.slotId(coor.xyz(maxPos + 1, 0, 0), 4)] = "ste/ste_wall.module"
-            
-            if params.leftTrack == 1 then
-                result[ste.slotId(coor.xyz(minPos - 2, 0, 0), 3)] = trackType
-            end
-            
-            if params.rightTrack == 1 then
-                result[ste.slotId(coor.xyz(maxPos + 2, 0, 0), 3)] = trackType
-            end
-            
-            return result
-        end,
-        function()
-            local streetType = "ste/streets/" .. streetTypeList[params.streetType + 1] .. ".module"
-            local length = lengthList[params.halfLength + 1]
-            local result = {}
-            
-            result[ste.slotId(coor.xyz(50, 0, 0), 1)] = streetType
-            result[ste.slotId(coor.xyz(50, 0, 0), 2)] = streetType
-            
-            if (params.adjustS < 99) then
-                local adjustPosY = math.ceil(((params.adjustS + 1) * 0.01 * length) / 5)
-                if adjustPosY < 3 then adjustPosY = 3 end
-                result[ste.slotId(coor.xyz(50, adjustPosY < 3 and 3 or adjustPosY, 0), 8)] = "ste/ste_pos_marker.module"
-            end
-
-            if (params.adjustU < 99) then
-                local adjustPosY = math.ceil(((params.adjustU + 1) * 0.01 * length) / 5)
-                if adjustPosY < 3 then adjustPosY = 3 end
-                result[ste.slotId(coor.xyz(50, adjustPosY < 3 and 3 or adjustPosY, 0), 9)] = "ste/ste_pos_marker.module"
-            end
-
-            result[ste.slotId(coor.xyz(49, 0, 0), 4)] = "ste/ste_wall.module"
-            result[ste.slotId(coor.xyz(51, 0, 0), 4)] = "ste/ste_wall.module"
-            
-            return result
-        end
-    }
-    return fn[params.templateIndex + 1]()
-end
-
 local preProcessFn = function(modules, change)
     if change.added then
         local info = ste.slotInfo(change.slotId)
@@ -364,6 +284,9 @@ local preProcessFn = function(modules, change)
                 end
             end
             modules[slotId] = change.module
+        elseif (info.pos.z == 3) then
+            modules[ste.slotId(info.pos:withZ(0), info.typeId)] = change.module
+            modules[change.slotId] = nil
         else
             modules[change.slotId] = change.module
         end
@@ -419,7 +342,7 @@ local updateFn = function(params)
             terrainAlignmentLists = {{type = "EQUAL", faces = {}}}
         }
     end
-
+    
     defaultParams(params)
     local config = config(params)
     
@@ -434,26 +357,28 @@ local updateFn = function(params)
         colliders = {}
     }
     
-    local addSlot = function(typeId, pos, coords, dep)
+    local addSlot = function(typeId, pos, coords, dep, z)
         local spacing = typeId == 4 and coor.xy(0.25, 2) or coor.xy(2, 2)
         local type = typeId == 4 and "ste_wall" or typeId == 5 and "ste_beam" or typeId == 6 and "ste_freenode" or "ste_track"
-        local coord = (coords[1].s:avg(coords[1].i)) .. (typeId == 6 and coor.transZ(1) or coor.I())
-        local id = ste.slotId(coor.xyz(pos, 0, 0), typeId)
+        local coord = (coords[1].s:avg(coords[1].i)) .. (typeId == 6 and coor.transZ(1) or coor.transZ(z or 0))
+        local id = ste.slotId(coor.xyz(pos, 0, z or 0), typeId)
         insert(result.slots, {
             id = id,
-            transf = coor.trans(coord),
+            transf = coor.rotZ(pi * 0.5) * coor.trans(coord),
             type = type,
-            spacing = {spacing.x, spacing.x, spacing.y, spacing.y}
+            spacing = {spacing.x, spacing.x, spacing.y, spacing.y},
+            shape = z and 1 or 0,
         })
         
-        if dep then 
-            if not result.dependentSlots[dep] then result.dependentSlots[dep] = {} end 
+        if dep then
+            if not result.dependentSlots[dep] then result.dependentSlots[dep] = {} end
             table.insert(result.dependentSlots[dep], id)
         end
+        
         return coords, id
     end
-
-    local addMarker = function(typeId,  pos, coords, nSeg, dep)
+    
+    local addMarker = function(typeId, pos, coords, nSeg, dep)
         local posMark = typeId == 2 and config.posMark[pos].underground or config.posMark[pos].surface
         local spacing = typeId == 4 and coor.xy(0.2, 2) or coor.xy(2, 2)
         local typeMark = {8, 9, 8, 8, 7}
@@ -463,8 +388,8 @@ local updateFn = function(params)
                 local vec = (coord.s - coord.i):withZ(0)
                 local coord = coord.s:avg(coord.i)
                 local id = ste.slotId(i == posMark.y and posMark or coor.xyz(pos, i, 0), typeMark[typeId])
-                if dep then 
-                    if not result.dependentSlots[dep] then result.dependentSlots[dep] = {} end 
+                if dep then
+                    if not result.dependentSlots[dep] then result.dependentSlots[dep] = {} end
                     table.insert(result.dependentSlots[dep], id)
                 end
                 insert(result.slots, {
@@ -479,7 +404,7 @@ local updateFn = function(params)
     end
     
     local emptyPos = func.seq(config.posMin, config.posMax)
-
+    
     for slotId, m in pairs(params.modules) do
         local info = ste.slotInfo(slotId)
         local pos = info.pos.x
@@ -487,12 +412,13 @@ local updateFn = function(params)
         if (info.typeId == 1) then
             if not params.modules[ste.slotId(info.pos, 6)] then
                 local coords, sId = addSlot(info.typeId, pos, config.coords[pos].surface.coords)
+                addSlot(info.typeId, pos, config.coords[pos].surface.coords, sId, 3)
                 addMarker(info.typeId, pos, coords, config.coords[pos].surface.nSeg, sId)
                 addSlot(6, pos, coords, sId)
                 if not params.modules[ste.slotId(info.pos, 5)] then
                     addSlot(5, pos, config.coords[pos].top.coords)
                 end
-
+                
                 if not params.modules[ste.slotId(info.pos, 2)] then
                     addSlot(2, pos, config.coords[pos].underground.coords)
                 end
@@ -500,6 +426,7 @@ local updateFn = function(params)
         elseif (info.typeId == 2) then
             if not params.modules[ste.slotId(info.pos, 6)] then
                 local coords, sId = addSlot(info.typeId, pos, config.coords[pos].underground.coords)
+                addSlot(info.typeId, pos, config.coords[pos].underground.coords, sId, 3)
                 addMarker(info.typeId, pos, coords, config.coords[pos].underground.nSeg, sId)
                 if not params.modules[ste.slotId(info.pos, 1)] then
                     addSlot(1, pos, config.coords[pos].surface.coords)
@@ -508,27 +435,29 @@ local updateFn = function(params)
         elseif (info.typeId == 3) then
             if not params.modules[ste.slotId(info.pos, 6)] then
                 local coords, sId = addSlot(info.typeId, pos, config.coords[pos].top.coords)
+                addSlot(info.typeId, pos, config.coords[pos].top.coords, sId, 3)
                 addSlot(6, pos, coords, sId)
                 addMarker(info.typeId, pos, coords, config.coords[pos].top.nSeg, sId)
             end
         elseif (info.typeId == 4) then
             local coords, sId = addSlot(info.typeId, pos, config.coords[pos].wall.coords)
+            addSlot(info.typeId, pos, config.coords[pos].wall.coords, sId, 3)
             addMarker(info.typeId, pos, coords, config.coords[pos].wall.nSeg, sId)
         elseif (info.typeId == 5) then
             local coords, sId = addSlot(5, pos, config.coords[pos].top.coords)
             addMarker(5, pos, coords, config.coords[pos].top.nSeg, sId)
         end
     end
-
+    
     for _, pos in ipairs(emptyPos) do
         local posL = func.max(func.filter(
             config.allPos, function(p) return p < pos end))
         local posR = func.min(func.filter(
             config.allPos, function(p) return p > pos end))
-
+        
         local typeIdL = config.modules[posL].typeId
         local typeIdR = config.modules[posR].typeId
-
+        
         if (typeIdL == 4 and typeIdR == 4) then
             addSlot(3, pos, config.coords[pos].top.coords)
             addSlot(1, pos, config.coords[pos].surface.coords)
@@ -584,19 +513,6 @@ local updateFn = function(params)
         end
     end
     
-    -- result.slotConfig = {
-    --     ste_track = {
-    --         maxModules = -1,
-    --         message = "",
-    --         skipCollisionCheck = true,
-    --     },
-    --     ste_wall = {
-    --         maxModules = -1,
-    --         message = "",
-    --         skipCollisionCheck = true,
-    --     }
-    -- }
-    
     result.terminateConstructionHook = function()
         local terrainEql = {}
         local terrainGrt = {}
@@ -614,7 +530,6 @@ local updateFn = function(params)
     end
     
     -- result.callInvalidModules = true
-    
     return result
 end
 
@@ -650,11 +565,11 @@ function data()
                             defaultIndex = 1
                         },
                         {
-                            key = "highspeed",
-                            name = _("MENU_TRACK_HS"),
-                            uiType = "CHECKBOX",
-                            values = {"0", "1"},
-                            defaultIndex = 1
+                            key = "trackType",
+                            name = _("MENU_TRACK_TYPE"),
+                            uiType = "COMBOBOX",
+                            values = {_("Standard"), _("High-Speed")},
+                            defaultIndex = 0
                         },
                         {
                             key = "leftTrack",
@@ -671,14 +586,14 @@ function data()
                             defaultIndex = 0
                         },
                         {
-                            key ="adjustS",
+                            key = "adjustS",
                             name = _("MENU_ADJUST_LENGTH_SURFACE"),
                             values = func.seqMap({1, 100}, tostring),
                             uiType = "SLIDER",
                             defaultIndex = 99
                         },
                         {
-                            key ="adjustU",
+                            key = "adjustU",
                             name = _("MENU_ADJUST_LENGTH_UNDERGROUND"),
                             values = func.seqMap({1, 100}, tostring),
                             uiType = "SLIDER",
@@ -704,19 +619,19 @@ function data()
                         {
                             key = "streetType",
                             name = _("MENU_STREET_TYPE"),
-                            values = func.map(streetTypeList, function(s) return "ui/streets/standard/" .. s .. ".tga" end),
-                            uiType = "ICON_BUTTON",
+                            uiType = "COMBOBOX",
+                            values = streetTypeList,
                             defaultIndex = 0
                         },
                         {
-                            key ="adjustS",
+                            key = "adjustS",
                             name = _("MENU_ADJUST_LENGTH_SURFACE"),
                             values = func.seqMap({1, 100}, tostring),
                             uiType = "SLIDER",
                             defaultIndex = 99
                         },
                         {
-                            key ="adjustU",
+                            key = "adjustU",
                             name = _("MENU_ADJUST_LENGTH_UNDERGROUND"),
                             values = func.seqMap({1, 100}, tostring),
                             uiType = "SLIDER",
@@ -733,7 +648,7 @@ function data()
             name = _("MENU_NAME"),
             description = _("MENU_DESC")
         },
-        categories = { "track_construction" },
+        categories = {"track_construction"},
         availability = {
             yearFrom = 0
         },
@@ -741,7 +656,7 @@ function data()
         -- buildMode = "MULTI",
         -- order = 27229,
         constructionTemplates = constructionTemplates,
-        createTemplateFn = createTemplateFn,
+        createTemplateFn = function() return {} end,
         -- skipCollision = true,
         -- austemovable = false,
         params = params(),

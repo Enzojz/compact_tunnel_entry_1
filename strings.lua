@@ -11,6 +11,9 @@ Known bug:
 - The hole dig on the ground get a zigzags, which needed to fix with support from UG (still unknow if it can be fixed or not)
 
 Changelog:
+1.5
+- Added in-place track/street/wall replacement
+- Intergration of mod street/track in the parameters menu
 1.4
 - Ability to convert between electrified and non-elecrified track
 1.3
@@ -39,6 +42,9 @@ local descCN = [[本模组可以以紧凑的方式建造铁路或者街道隧道
 - 地面上开的洞的边缘会带有锯齿，这个问题需要UG去解决（并且不清楚是否可能解决）
 
 更新记录:
+1.5
+- 增加了直接替换轨道、街道和挡土墙的功能
+- 在初始菜单中增加了第三方模组道路和轨道
 1.4
 - 对所有轨道有效接触网转换功能
 1.3
@@ -67,6 +73,9 @@ local descTC = [[本模組可以以緊湊的方式建造鐵路或者街道隧道
 - 地面上開的洞的邊緣會帶有鋸齒，這個問題需要UG去解決（並且不清楚是否可能解決）
 
 更新記錄:
+1.5
+- 增加了直接替換軌道、街道和擋土牆的功能
+- 在初始菜單中增加了協力廠商模組道路和軌道
 1.4
 - 對所有軌道有效接觸網轉換功能
 1.3
@@ -102,7 +111,7 @@ function data()
             DESC_MARKER = "Use adjuster to change the length of tracks, streets and walls.",
             MENU_WALL_NAME = "Retaining walls",
             MENU_WALL_DESC = "Build retaining walls at sides or between tracks.",
-            
+            MENU_TRACK_TYPE = "Track Type",
             MENU_STREET_TYPE = "Road Type",
             
             MENU_ADJUST_LENGTH_SURFACE = "Surface pre-adjustment (%)",
@@ -148,6 +157,7 @@ function data()
             MENU_WALL_NAME = "挡土墙",
             MENU_WALL_DESC = "在轨道或者街道两侧建造挡土墙。",
             
+            MENU_TRACK_TYPE = "轨道类型",
             MENU_STREET_TYPE = "道路类型",
 
             MENU_ADJUST_LENGTH_SURFACE = "地面长度预调 (%)",
@@ -197,6 +207,7 @@ function data()
             DESC_FREENODE_MARKER = "使用分離工具將軌道或道路從隧道入口的主體中分離出來，以便進行更深入的編輯",
 
 
+            MENU_TRACK_TYPE = "軌道類型",
             MENU_STREET_TYPE = "道路類型",
 
             MENU_ADJUST_LENGTH_SURFACE = "地面長度預調 (%)",

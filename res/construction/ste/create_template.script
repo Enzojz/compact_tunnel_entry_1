@@ -1,0 +1,98 @@
+local func = require "ste/func"
+local coor = require "ste/coor"
+local line = require "ste/coorline"
+local quat = require "ste/quaternion"
+local pipe = require "ste/pipe"
+local ste = require "ste"
+
+-- local dump = require "luadump"
+
+local math = math
+local pi = math.pi
+local abs = math.abs
+local table = table
+local unpack = table.unpack
+local insert = table.insert
+
+local lengthList = func.seq(40, 400)
+
+local trackNumberList = {1, 2, 3, 4, 5, 6, 7, 8, 10}
+
+
+local createTemplateFn = function(params)
+    local fn = {
+        function()
+            local trackNb = trackNumberList[params.trackNb + 1]
+            local trackType = ("%s%s.module"):format(params.capturedParams.trackModuleList[params.trackType + 1], params.catenary == 1 and "_catenary" or "")
+            local length = lengthList[params.halfLength + 1]
+            
+            local minPos = 50 - (trackNb % 2 == 1 and (trackNb - 1) / 2 or trackNb / 2)
+            local maxPos = minPos + trackNb - 1
+            
+            local result = {}
+            
+            for p = minPos, maxPos do
+                result[ste.slotId(coor.xyz(p, 0, 0), 1)] = trackType
+                result[ste.slotId(coor.xyz(p, 0, 0), 2)] = trackType
+                
+                if (params.adjustS < 99) then
+                    local adjustPosY = math.ceil(((params.adjustS + 1) * 0.01 * length) / 5)
+                    if adjustPosY < 3 then adjustPosY = 3 end
+                    result[ste.slotId(coor.xyz(p, adjustPosY < 3 and 3 or adjustPosY, 0), 8)] = "ste/ste_pos_marker.module"
+                end
+                
+                if (params.adjustU < 99) then
+                    local adjustPosY = math.ceil(((params.adjustU + 1) * 0.01 * length) / 5)
+                    if adjustPosY < 3 then adjustPosY = 3 end
+                    result[ste.slotId(coor.xyz(p, adjustPosY < 3 and 3 or adjustPosY, 0), 9)] = "ste/ste_pos_marker.module"
+                end
+            
+            end
+            
+            result[ste.slotId(coor.xyz(minPos - 1, 0, 0), 4)] = "ste/ste_wall.module"
+            result[ste.slotId(coor.xyz(maxPos + 1, 0, 0), 4)] = "ste/ste_wall.module"
+            
+            if params.leftTrack == 1 then
+                result[ste.slotId(coor.xyz(minPos - 2, 0, 0), 3)] = trackType
+            end
+            
+            if params.rightTrack == 1 then
+                result[ste.slotId(coor.xyz(maxPos + 2, 0, 0), 3)] = trackType
+            end
+            
+            return result
+        end,
+        function()
+            local streetType = ("%s%s.module"):format(params.capturedParams.streetModuleList[params.streetType + 1], "")
+            local length = lengthList[params.halfLength + 1]
+            local result = {}
+            
+            result[ste.slotId(coor.xyz(50, 0, 0), 1)] = streetType
+            result[ste.slotId(coor.xyz(50, 0, 0), 2)] = streetType
+            
+            if (params.adjustS < 99) then
+                local adjustPosY = math.ceil(((params.adjustS + 1) * 0.01 * length) / 5)
+                if adjustPosY < 3 then adjustPosY = 3 end
+                result[ste.slotId(coor.xyz(50, adjustPosY < 3 and 3 or adjustPosY, 0), 8)] = "ste/ste_pos_marker.module"
+            end
+            
+            if (params.adjustU < 99) then
+                local adjustPosY = math.ceil(((params.adjustU + 1) * 0.01 * length) / 5)
+                if adjustPosY < 3 then adjustPosY = 3 end
+                result[ste.slotId(coor.xyz(50, adjustPosY < 3 and 3 or adjustPosY, 0), 9)] = "ste/ste_pos_marker.module"
+            end
+            
+            result[ste.slotId(coor.xyz(49, 0, 0), 4)] = "ste/ste_wall.module"
+            result[ste.slotId(coor.xyz(51, 0, 0), 4)] = "ste/ste_wall.module"
+            
+            return result
+        end
+    }
+    return fn[params.templateIndex + 1]()
+end
+
+function data()
+    return {
+        fn = createTemplateFn
+    }
+end
