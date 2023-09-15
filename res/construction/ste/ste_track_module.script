@@ -39,6 +39,9 @@ function data()
             local isParallel = info.typeId == 3
 
             local isFree = params.modules[ste.slotId(info.pos, 6)] ~= nil
+            local var = params.modules[slotId].variant
+            local hasBus = var > 2
+            local hasTram = ({"NO", "YES", "ELECTRIC", "NO", "YES", "ELECTRIC"})[var + 1]
 
             if isUnderground then isRev = not isRev end
             
@@ -106,7 +109,8 @@ function data()
                 params = {
                     type = isStreet and (trackType) or (trackType .. ".lua"),
                     catenary = catenary,
-                    tramTrackType = params.tramTrack and (({"NO", "YES", "ELECTRIC"})[params.tramTrack + 1]) or nil
+                    hasBus = hasBus,
+                    tramTrackType = hasTram
                 },
                 edgeType = isUnderground and "TUNNEL" or nil,
                 edgeTypeName = isUnderground and "ste_void.lua" or nil,

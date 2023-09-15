@@ -1,0 +1,33 @@
+data = function()
+    return {
+        availability = {
+            yearFrom = 0,
+            yearTo = 0,
+        },
+        buildMode = "SINGLE",
+        cost = {
+            price = 0,
+        },
+        description = {
+            name = _("MENU_STREET_VARIANT"),
+            description = _("DESC_STREET VARIANT"),
+            icon = "ui/tracks/electrify.tga"
+        },
+        category = {
+            categories = {_("STRUCTURE")},
+        },
+        type = "ste_street_variant",
+        order = {
+            value = 0,
+        },
+        metadata = {
+            isTrack = false,
+            type = "ste_street_variant"
+        },
+        
+        updateFn = function(result, transform, tag, slotId, addModelFn, params) end,
+        
+        getModelsFn = function(params) return {} end
+    }
+
+end

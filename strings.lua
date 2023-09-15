@@ -11,6 +11,8 @@ Known bug:
 - The hole dig on the ground get a zigzags, which needed to fix with support from UG (still unknow if it can be fixed or not)
 
 Changelog:
+1.6
+- Added tram tracks switch
 1.5
 - Added in-place track/street/wall replacement
 - Intergration of mod street/track in the parameters menu
@@ -42,6 +44,8 @@ local descCN = [[本模组可以以紧凑的方式建造铁路或者街道隧道
 - 地面上开的洞的边缘会带有锯齿，这个问题需要UG去解决（并且不清楚是否可能解决）
 
 更新记录:
+1.6
+- 增加了在道路上添加有轨电车的支持
 1.5
 - 增加了直接替换轨道、街道和挡土墙的功能
 - 在初始菜单中增加了第三方模组道路和轨道
@@ -73,6 +77,8 @@ local descTC = [[本模組可以以緊湊的方式建造鐵路或者街道隧道
 - 地面上開的洞的邊緣會帶有鋸齒，這個問題需要UG去解決（並且不清楚是否可能解決）
 
 更新記錄:
+1.6
+- 增加了在道路上添加有軌電車的支持
 1.5
 - 增加了直接替換軌道、街道和擋土牆的功能
 - 在初始菜單中增加了協力廠商模組道路和軌道
@@ -114,6 +120,9 @@ function data()
             MENU_TRACK_TYPE = "Track Type",
             MENU_STREET_TYPE = "Road Type",
             
+            MENU_STREET_VARIANT = "Tram tracks switch",
+            DESC_MENU_STREET_VARIANT = "To add or remove tram tracks from street",
+
             MENU_ADJUST_LENGTH_SURFACE = "Surface pre-adjustment (%)",
             MENU_ADJUST_LENGTH_UNDERGROUND = "Underground pre-adjustment (%)",
 
@@ -162,6 +171,9 @@ function data()
 
             MENU_ADJUST_LENGTH_SURFACE = "地面长度预调 (%)",
             MENU_ADJUST_LENGTH_UNDERGROUND = "地下长度预调 (%)",
+
+            MENU_STREET_VARIANT = "有轨轨道",
+            DESC_MENU_STREET_VARIANT = "在道路上增加有轨轨道",
             
             STRUCTURE = "支撑结构",
             TRACK = "轨道",
@@ -206,6 +218,8 @@ function data()
             FREENODE_MARKER = "分離工具",
             DESC_FREENODE_MARKER = "使用分離工具將軌道或道路從隧道入口的主體中分離出來，以便進行更深入的編輯",
 
+            MENU_STREET_VARIANT = "有軌軌道",
+            DESC_MENU_STREET_VARIANT = "在道路上增加有軌軌道",
 
             MENU_TRACK_TYPE = "軌道類型",
             MENU_STREET_TYPE = "道路類型",

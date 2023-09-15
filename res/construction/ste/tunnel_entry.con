@@ -5,8 +5,6 @@ local quat = require "ste/quaternion"
 local pipe = require "ste/pipe"
 local ste = require "ste"
 
--- local dump = require "luadump"
-
 local math = math
 local pi = math.pi
 local abs = math.abs
@@ -272,7 +270,23 @@ end
 local preProcessFn = function(modules, change)
     if change.added then
         local info = ste.slotInfo(change.slotId)
-        if (info.typeId > 6) then
+        if (info.typeId == 0) then
+            local slotId = ste.slotId(info.pos, info.typeId)
+            for _, k in ipairs(func.keys(modules)) do
+                local sinfo = ste.slotInfo(k)
+                if ((sinfo.typeId == 1 or sinfo.typeId == 2 or sinfo.typeId == 4) and sinfo.pos.x == info.pos.x) then
+                    local lut = {
+                        1, --Tram
+                        2, --Electric
+                        3, --Bus
+                        4, --Tram + Bus
+                        5, -- Electric + Bus
+                        0, -- Nothing
+                    }
+                    modules[k].variant = lut[modules[k].variant + 1]
+                end
+            end
+        elseif (info.typeId > 6) then
             local slotId = ste.slotId(info.pos, info.typeId)
             for _, k in ipairs(func.keys(modules)) do
                 local sinfo = ste.slotInfo(k)
@@ -359,7 +373,7 @@ local updateFn = function(params)
     
     local addSlot = function(typeId, pos, coords, dep, z)
         local spacing = typeId == 4 and coor.xy(0.25, 2) or coor.xy(2, 2)
-        local type = typeId == 4 and "ste_wall" or typeId == 5 and "ste_beam" or typeId == 6 and "ste_freenode" or "ste_track"
+        local type = typeId == 0 and "ste_street_variant" or typeId == 4 and "ste_wall" or typeId == 5 and "ste_beam" or typeId == 6 and "ste_freenode" or "ste_track"
         local coord = (coords[1].s:avg(coords[1].i)) .. (typeId == 6 and coor.transZ(1) or coor.transZ(z or 0))
         local id = ste.slotId(coor.xyz(pos, 0, z or 0), typeId)
         insert(result.slots, {
@@ -412,6 +426,9 @@ local updateFn = function(params)
         if (info.typeId == 1) then
             if not params.modules[ste.slotId(info.pos, 6)] then
                 local coords, sId = addSlot(info.typeId, pos, config.coords[pos].surface.coords)
+                if m.updateScript and m.updateScript.params and m.updateScript.params.isStreet then 
+                    addSlot(0, pos, coords, sId, 3)
+                end
                 addSlot(info.typeId, pos, config.coords[pos].surface.coords, sId, 3)
                 addMarker(info.typeId, pos, coords, config.coords[pos].surface.nSeg, sId)
                 addSlot(6, pos, coords, sId)
@@ -426,6 +443,9 @@ local updateFn = function(params)
         elseif (info.typeId == 2) then
             if not params.modules[ste.slotId(info.pos, 6)] then
                 local coords, sId = addSlot(info.typeId, pos, config.coords[pos].underground.coords)
+                if m.updateScript and m.updateScript.params and m.updateScript.params.isStreet then 
+                    addSlot(0, pos, coords, sId, 3)
+                end
                 addSlot(info.typeId, pos, config.coords[pos].underground.coords, sId, 3)
                 addMarker(info.typeId, pos, coords, config.coords[pos].underground.nSeg, sId)
                 if not params.modules[ste.slotId(info.pos, 1)] then
