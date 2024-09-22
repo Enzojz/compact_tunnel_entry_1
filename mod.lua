@@ -38,7 +38,7 @@ local streetIndices = {
 function data()
     return {
         info = {
-            minorVersion = 5,
+            minorVersion = 7,
             severityAdd = "NONE",
             severityRemove = "CRITICAL",
             name = _("MOD_NAME"),

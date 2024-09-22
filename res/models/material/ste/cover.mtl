@@ -49,9 +49,9 @@ function data()
             operation_1 =
             {
                 op = "MULTIPLICATION",
-                mode = "NORMAL",
+                mode = "UV_MODE_WORLD",
                 scale = { 0.5, 0.5 },
-                opacity = -300.0
+                opacity = 1
             },
             operation_2 = {
                 mode = "WORLD_XY",
