@@ -26,7 +26,7 @@ function data()
                 wrapT = "REPEAT",
             },
             map_op_1 = {
-                fileName = "models/industry/overlay_textures/small_03.tga",
+                fileName = "models/industry/overlay_textures/small_03.dds",
                 type = "TWOD",
                 wrapS = "REPEAT",
                 wrapT = "REPEAT",
