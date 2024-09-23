@@ -4,8 +4,6 @@ The entries can be found under:
 1. Road -> Street -> Street Construction
 2. Rail -> Building -> Track Construction
 
-* This mod requires the shader enhancement mod.
-
 Known bug:
 - The street causes a lot of colission, sometimes not usable at all
 - The hole dig on the ground get a zigzags, which needed to fix with support from UG (still unknow if it can be fixed or not)
@@ -37,8 +35,6 @@ local descCN = [[本模组可以以紧凑的方式建造铁路或者街道隧道
 1. 道路 -> 街道 -> 街道建设
 2. 轨道 -> 建筑 -> Track Construction
 
-* 本模组需要着色器增强的支持
-
 已知Bug:
 - 街道经常会引发冲突，有时候甚至完全没法使用
 - 地面上开的洞的边缘会带有锯齿，这个问题需要UG去解决（并且不清楚是否可能解决）
@@ -69,8 +65,6 @@ local descTC = [[本模組可以以緊湊的方式建造鐵路或者街道隧道
 項目在以下位置:
 1. 道路 -> 街道 -> 街道建設
 2. 軌道 -> 建築 -> Track Construction
-
-* 本模組需要著色器增強的支援
 
 已知Bug:
 - 街道經常會引發衝突，有時候甚至完全沒法使用
