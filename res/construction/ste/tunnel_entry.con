@@ -372,7 +372,7 @@ local updateFn = function(params)
     }
     
     local addSlot = function(typeId, pos, coords, dep, z)
-        local spacing = typeId == 4 and coor.xy(0.25, 2) or coor.xy(2, 2)
+        local spacing = typeId == 4 and coor.xy(0.25, 2) or coor.xy(0, 0)
         local type = typeId == 0 and "ste_street_variant" or typeId == 4 and "ste_wall" or typeId == 5 and "ste_beam" or typeId == 6 and "ste_freenode" or "ste_track"
         local coord = (coords[1].s:avg(coords[1].i)) .. (typeId == 6 and coor.transZ(1) or coor.transZ(z or 0))
         local id = ste.slotId(coor.xyz(pos, 0, z or 0), typeId)
